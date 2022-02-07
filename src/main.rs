@@ -31,6 +31,7 @@ fn parse_args(args : Vec<String>) {
             "help"|"-h" => help(),
             "init" => set_dir(),
             "subject" => parse_subject(args),
+            "task" => parse_task(args),
             _ => panic!("Wrong args :p"),
         }
     } else {
@@ -65,6 +66,8 @@ fn help() {
     items.push(Help_Item::new("init", "Set current directory as vault", false));
     items.push(Help_Item::new("subject", "Modify subjects", true));
     items.push(Help_Item::new("add", "Add subject", false));
+    items.push(Help_Item::new("task", "Modify tasks", true));
+    items.push(Help_Item::new("add", "Add task", false));
 
     for item in items {
         item.print(w);
@@ -150,14 +153,54 @@ fn parse_subject(args : Vec<String>) {
 }
 
 fn add_subject(subject : String) {
-    println!("add subject {}", subject);
     let dir = get_dir();
-    println!("{}", dir);
     fs::create_dir_all(format!("{}/{}", dir, subject)).expect("Could not create subject directory");
     // Load data
     let mut data = load_data().expect("cannot load data");
     data.subjects.push(Subject::new(subject));
     save_data(data).expect("cannot save data");
+}
+
+fn parse_task(args : Vec<String>) {
+    let arg = args.get(1);
+    if let Some(arg) = arg {
+        match arg.as_str() {
+            "add" => add_task(),
+            _ => help(),
+        }
+    }
+}
+
+fn add_task() {
+    // Load data
+    let mut data = load_data().expect("cannot load data");
+    println!("here are all subjects:");
+    let mut subject : Subject;
+    if data.subjects.len() > 1 {
+        let n = loop {
+            for (i, subject) in data.subjects.iter().enumerate() {
+                println!("{}) {}", i, subject.name.green());
+            }
+            println!("{}", "Which one corisponds to the task: ".cyan());
+            let mut line = String::new();
+            std::io::stdin().read_line(&mut line).unwrap();
+            line = line.split("\n").collect::<Vec<&str>>()[0].to_string();
+            if let Ok(n) = line.parse::<usize>() {
+                if n < data.subjects.len() {
+                    break n;
+                } else {
+                    println!("{} {}", n, "Is not one of the options".red());
+                }
+            } else {
+                println!("{}", "Err, unable to parse. Try again".red());
+            }
+        };
+        println!("n = {}", n);
+        data.subjects[n].tasks.push(Task::new("Test".to_string(), "due".to_string(), TaskType::Test));
+        save_data(data).expect("unable to save data");
+    } else {
+
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]

@@ -1,4 +1,5 @@
 use std::{env, fs};
+use chrono::{DateTime, NaiveDate, NaiveDateTime, NaiveTime};
 
 use colored::Colorize;
 use terminal_size::{Width, Height, terminal_size};
@@ -89,6 +90,7 @@ fn init() -> Result<(), String>{
        // conf file doesnt exist
        println!("\n{:=^width$}", " Not configured ".red(), width=get_width());
        println!("\n{:^width$}", "Please type todo help to configure".cyan(), width=get_width());
+       return Ok(());
     }
 
     create_json().expect("Unable to load json");
@@ -197,12 +199,45 @@ fn add_task() {
     } else {
         0
     };
-    println!("n = {}", n);
     let mut name = String::new();
     println!("{}", "What is the name of this task?".green());
     std::io::stdin().read_line(&mut name).unwrap();
     name = name.split("\n").collect::<Vec<&str>>()[0].to_string();
-    data.subjects[n].tasks.push(Task::new(name, "due".to_string(), TaskType::Test));
+
+    let task_type : TaskType = loop {
+        println!("{}", "What type is your task".cyan());
+        for (i, option) in vec!["Project", "Test"].iter().enumerate() {
+            println!("{}) {}", i, option.green());
+        }
+        let mut line = String::new();
+        std::io::stdin().read_line(&mut line).unwrap();
+        line = line.split("\n").collect::<Vec<&str>>()[0].to_string();
+        if let Ok(n) = line.parse::<usize>() {
+            match n {
+                0 => break TaskType::Project,
+                1 => break TaskType::Test,
+                _ => println!("{} {}", n, "Is not one of the options".red()),
+            }
+        } else {
+            println!("{}", "Err, unable to parse. Try again".red());
+        }
+    };
+
+    println!("{}", "What is the due date?".green());
+    let date = loop {
+        println!("{}", "Enter in format dd-mm-yyyy".cyan());
+        let mut line = String::new();
+        std::io::stdin().read_line(&mut line).unwrap();
+        line = line.split("\n").collect::<Vec<&str>>()[0].to_string();
+        if let Ok(date) = NaiveDate::parse_from_str(line.as_str(), "%d-%m-%Y") {
+            break date;
+        } else {
+            println!("{}", "Not formatted properly".red());
+        }
+    };
+    println!("{:?}",date);
+
+    data.subjects[n].tasks.push(Task::new(name, date, task_type));
     save_data(data).expect("unable to save data");
 }
 
@@ -215,7 +250,7 @@ enum TaskType {
 #[derive(Serialize, Deserialize, Debug)]
 struct Task {
     name : String,
-    due : String,
+    due : NaiveDate,
     task_type : TaskType,
 }
 
@@ -231,7 +266,7 @@ struct Data {
 }
 
 impl Task {
-    fn new(name : String, due : String, task_type : TaskType) -> Task {
+    fn new(name : String, due : NaiveDate, task_type : TaskType) -> Task {
         Task { name, due, task_type }
     }
 }

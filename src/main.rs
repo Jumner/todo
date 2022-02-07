@@ -1,5 +1,5 @@
 use std::{env, fs};
-use chrono::{DateTime, NaiveDate, NaiveDateTime, NaiveTime};
+use chrono::Datelike;
 
 use colored::Colorize;
 use terminal_size::{Width, Height, terminal_size};
@@ -223,21 +223,7 @@ fn add_task() {
         }
     };
 
-    println!("{}", "What is the due date?".green());
-    let date = loop {
-        println!("{}", "Enter in format dd-mm-yyyy".cyan());
-        let mut line = String::new();
-        std::io::stdin().read_line(&mut line).unwrap();
-        line = line.split("\n").collect::<Vec<&str>>()[0].to_string();
-        if let Ok(date) = NaiveDate::parse_from_str(line.as_str(), "%d-%m-%Y") {
-            break date;
-        } else {
-            println!("{}", "Not formatted properly".red());
-        }
-    };
-    println!("{:?}",date);
-
-    data.subjects[n].tasks.push(Task::new(name, date, task_type));
+    data.subjects[n].tasks.push(Task::new(name, Date::new(), task_type));
     save_data(data).expect("unable to save data");
 }
 
@@ -250,7 +236,7 @@ enum TaskType {
 #[derive(Serialize, Deserialize, Debug)]
 struct Task {
     name : String,
-    due : NaiveDate,
+    due : Date,
     task_type : TaskType,
 }
 
@@ -265,8 +251,15 @@ struct Data {
     subjects : Vec<Subject>
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+struct Date {
+    day : u16,
+    month : u16,
+    year : u16,
+}
+
 impl Task {
-    fn new(name : String, due : NaiveDate, task_type : TaskType) -> Task {
+    fn new(name : String, due : Date, task_type : TaskType) -> Task {
         Task { name, due, task_type }
     }
 }
@@ -282,5 +275,39 @@ impl Data {
     fn new() -> Data {
         let subjects : Vec<Subject> = vec![];
         Data { subjects }
+    }
+}
+
+impl Date {
+    fn new() -> Date {
+        let current_date = chrono::Utc::now().date();
+        let mut nums : Vec<u16> = vec![];
+        'main :loop {
+            println!("{}", "Please enter the due date in form dd-mm-yyyy. Ignored information will use current date:".cyan());
+            nums = vec![];
+            let mut line = String::new();
+            std::io::stdin().read_line(&mut line);
+            let date : Vec<&str> = line.split("\n").collect::<Vec<&str>>()[0].split("-").collect();
+            let date : Vec<&str> = if date[0] == "" {vec![]} else {date}; // If its empty, use todays date
+            for i in 0..3 {
+                if let Some(n) = date.get(i) {
+                    if let Ok(n) = n.parse::<u16>() {
+                        nums.push(n);
+                    } else {
+                        println!("{}", "Unable to parse input. Try again".red());
+                        continue 'main;
+                    }
+                } else {
+                    nums.push(match i {
+                        0 => current_date.day() as u16,
+                        1 => current_date.month() as u16,
+                        2 => current_date.year() as u16,
+                        _ => 0
+                    });
+                }
+            }
+            break;
+        }
+        Date { day: nums[0], month : nums[1], year : nums[2] }
     }
 }

@@ -175,7 +175,6 @@ fn add_task() {
     // Load data
     let mut data = load_data().expect("cannot load data");
     println!("here are all subjects:");
-    let mut subject : Subject;
     if data.subjects.len() > 1 {
         let n = loop {
             for (i, subject) in data.subjects.iter().enumerate() {
@@ -196,7 +195,11 @@ fn add_task() {
             }
         };
         println!("n = {}", n);
-        data.subjects[n].tasks.push(Task::new("Test".to_string(), "due".to_string(), TaskType::Test));
+        let mut name = String::new();
+        println!("{}", "What is the name of this task?".green());
+        std::io::stdin().read_line(&mut name).unwrap();
+        name = name.split("\n").collect::<Vec<&str>>()[0].to_string();
+        data.subjects[n].tasks.push(Task::new(name, "due".to_string(), TaskType::Test));
         save_data(data).expect("unable to save data");
     } else {
 

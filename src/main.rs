@@ -174,9 +174,9 @@ fn parse_task(args : Vec<String>) {
 fn add_task() {
     // Load data
     let mut data = load_data().expect("cannot load data");
-    println!("here are all subjects:");
-    if data.subjects.len() > 1 {
-        let n = loop {
+    let n = if data.subjects.len() > 1 {
+        loop {
+            println!("here are all subjects:");
             for (i, subject) in data.subjects.iter().enumerate() {
                 println!("{}) {}", i, subject.name.green());
             }
@@ -193,17 +193,17 @@ fn add_task() {
             } else {
                 println!("{}", "Err, unable to parse. Try again".red());
             }
-        };
-        println!("n = {}", n);
-        let mut name = String::new();
-        println!("{}", "What is the name of this task?".green());
-        std::io::stdin().read_line(&mut name).unwrap();
-        name = name.split("\n").collect::<Vec<&str>>()[0].to_string();
-        data.subjects[n].tasks.push(Task::new(name, "due".to_string(), TaskType::Test));
-        save_data(data).expect("unable to save data");
+        }
     } else {
-
-    }
+        0
+    };
+    println!("n = {}", n);
+    let mut name = String::new();
+    println!("{}", "What is the name of this task?".green());
+    std::io::stdin().read_line(&mut name).unwrap();
+    name = name.split("\n").collect::<Vec<&str>>()[0].to_string();
+    data.subjects[n].tasks.push(Task::new(name, "due".to_string(), TaskType::Test));
+    save_data(data).expect("unable to save data");
 }
 
 #[derive(Serialize, Deserialize, Debug)]

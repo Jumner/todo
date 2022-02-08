@@ -168,15 +168,15 @@ fn parse_task(args : Vec<String>) {
     if let Some(arg) = arg {
         match arg.as_str() {
             "add" => add_task(),
+            "complete" => complete_task(),
             _ => help(),
         }
     }
 }
 
-fn add_task() {
-    // Load data
+fn select_subject() -> usize {
     let mut data = load_data().expect("cannot load data");
-    let n = if data.subjects.len() > 1 {
+    return if data.subjects.len() > 1 {
         loop {
             println!("here are all subjects:");
             for (i, subject) in data.subjects.iter().enumerate() {
@@ -199,6 +199,12 @@ fn add_task() {
     } else {
         0
     };
+    
+}
+fn add_task() {
+    // Load data
+    let mut data = load_data().expect("cannot load data");
+    let n = select_subject();
     let mut name = String::new();
     println!("{}", "What is the name of this task?".green());
     std::io::stdin().read_line(&mut name).unwrap();
@@ -225,6 +231,34 @@ fn add_task() {
 
     data.subjects[n].tasks.push(Task::new(name, Date::new(), task_type));
     save_data(data).expect("unable to save data");
+}
+
+fn complete_task() {
+    let mut data = load_data().expect("unable to load data");
+    let subject = select_subject();
+    let i = loop {
+        println!("{}", "Which of the following");
+        for (i, task) in data.subjects[subject].tasks.iter().enumerate() {
+            println!("{}) {}", i, task.name.green());
+        }
+        let mut line = String::new();
+        std::io::stdin().read_line(&mut line).unwrap();
+        line = line.split("\n").collect::<Vec<&str>>()[0].to_string();
+        if let Ok(n) = line.parse::<usize>() {
+            if let Some(task) = data.subjects[subject].tasks.get(n) {
+                break n;
+            } else {
+                println!{"{}", "That is not an option".red()};
+            }
+        } else {
+            println!("{}", "Unable to parse".red());
+        }
+    };
+
+    data.subjects[subject].tasks.remove(i);
+
+    save_data(data).expect("Unable to save data");
+
 }
 
 #[derive(Serialize, Deserialize, Debug)]

@@ -302,7 +302,7 @@ struct Data {
     subjects : Vec<Subject>
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Copy, Clone)]
 struct Date {
     day : u16,
     month : u16,
@@ -331,11 +331,14 @@ impl Task {
         writeln!(file, "- [ ] {:?}: {}", self.task_type, self.name).expect("Error writing to file");
         match self.task_type {
             TaskType::Test => {
-                //let study MARK
-                let study = Task::new(self.name, Date::now(), TaskType::Study);
-                study.generate();
+                let now = Date::now();
+                let diff = now.days() - self.due.days();
+                if diff <= 7 {
+                    let study = Task::new(self.name, Date::now(), TaskType::Study);
+                    study.generate();
+                }
             },
-            _ => {}
+            _ => {},
         }
     }
 }
@@ -389,5 +392,13 @@ impl Date {
     fn now() -> Date {
         let current_date = chrono::Utc::now().date();
         Date { day : current_date.day() as u16, month : current_date.month() as u16, year : current_date.year() as u16 }
+    }
+
+    fn days(self) -> u64 {
+        let mut days : u64 = 0;
+        days += self.day as u64;
+        days += self.month as u64 * 30;
+        days += (self.year-2000) as u64 * 365;
+        days
     }
 }

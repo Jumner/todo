@@ -266,7 +266,11 @@ fn complete_task() {
 
 fn generate() {
     let data = load_data().expect("Unable to load data");
-    fs::remove_dir_all(get_dir() + "/todo").expect("error purging old");
+    match fs::remove_dir_all(get_dir() + "/todo") {
+        Err(ref e) if e.kind() == std::io::ErrorKind::NotFound => {},
+        Err(e) => panic!("Unable to purge file"),
+        _ => {}
+    }
     for subject in data.subjects {
         for task in subject.tasks {
             task.generate();
@@ -278,6 +282,7 @@ fn generate() {
 enum TaskType {
     Test,
     Project,
+    Study,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -324,7 +329,15 @@ impl Task {
             writeln!(file, "#todo").expect("Error writing to file");
         }
         let mut file = OpenOptions::new().append(true).open(file_path).expect("error opening file");
-        writeln!(file, "- [ ] {}", self.name).expect("Error writing to file");
+        writeln!(file, "- [ ] {:?}: {}", self.task_type, self.name).expect("Error writing to file");
+        match self.task_type {
+            TaskType::Test => {
+                //let study MARK
+                let study = Task::new(self.name, Date::now(), TaskType::Study);
+                study.generate();
+            },
+            _ => {}
+        }
     }
 }
 
@@ -373,5 +386,9 @@ impl Date {
             break;
         }
         Date { day: nums[0], month : nums[1], year : nums[2] }
+    }
+    fn now() -> Date {
+        let current_date = chrono::Utc::now().date();
+        Date { day : current_date.day() as u16, month : current_date.month() as u16, year : current_date.year() as u16 }
     }
 }

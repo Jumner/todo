@@ -71,6 +71,7 @@ fn help() {
     items.push(HelpItem::new("add", "Add subject", false));
     items.push(HelpItem::new("task", "Modify tasks", true));
     items.push(HelpItem::new("add", "Add task", false));
+    items.push(HelpItem::new("complete", "Complete a task", false));
     items.push(HelpItem::new("generate", "Generate todo", true));
 
     for item in items {
@@ -272,7 +273,7 @@ fn generate() {
     }
     for subject in data.subjects {
         for task in subject.tasks {
-            task.generate();
+            task.generate(subject.name.as_str());
         }
     }
 }
@@ -314,7 +315,7 @@ impl Task {
         Task { name, due, task_type }
     }
 
-    fn generate(self) {
+    fn generate(self, subject : &str) {
         let dir = get_dir() + "/todo";
         let dir = dir.as_str();
         fs::create_dir_all(dir).expect("unable to create dir");
@@ -328,14 +329,14 @@ impl Task {
             writeln!(file, "#todo").expect("Error writing to file");
         }
         let mut file = OpenOptions::new().append(true).open(file_path).expect("error opening file");
-        writeln!(file, "- [ ] {:?}: {}", self.task_type, self.name).expect("Error writing to file");
+        writeln!(file, "- [ ] {}-{:?}: {}", subject, self.task_type, self.name).expect("Error writing to file");
         match self.task_type {
             TaskType::Test => {
                 let now = Date::now();
                 let diff = self.due.days() - now.days();
                 if diff <= 7 {
                     let study = Task::new(self.name, Date::now(), TaskType::Study);
-                    study.generate();
+                    study.generate(subject);
                 }
             },
             _ => {},

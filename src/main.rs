@@ -332,7 +332,7 @@ impl Task {
         match self.task_type {
             TaskType::Test => {
                 let now = Date::now();
-                let diff = now.days() - self.due.days();
+                let diff = self.due.days() - now.days();
                 if diff <= 7 {
                     let study = Task::new(self.name, Date::now(), TaskType::Study);
                     study.generate();

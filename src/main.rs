@@ -316,7 +316,7 @@ impl Task {
         fs::create_dir_all(dir).expect("unable to create dir");
         let date = self.due;
         let date = format!("{}-{}-{}", date.year, date.month, date.day);
-        let file_path = dir.to_owned() + "/" + date.as_str();
+        let file_path = dir.to_owned() + "/" + date.as_str() + ".md";
         let file_path = file_path.as_str();
         if !std::path::Path::new(file_path).exists() {
             let mut file = OpenOptions::new().write(true).create(true).open(file_path).expect("error opening file");

@@ -1,4 +1,6 @@
 use std::{env, fs};
+use std::fs::OpenOptions;
+use std::io::prelude::*;
 use chrono::Datelike;
 
 use colored::Colorize;
@@ -33,6 +35,7 @@ fn parse_args(args : Vec<String>) {
             "init" => set_dir(),
             "subject" => parse_subject(args),
             "task" => parse_task(args),
+            "generate" => generate(),
             _ => panic!("Wrong args :p"),
         }
     } else {
@@ -261,6 +264,16 @@ fn complete_task() {
 
 }
 
+fn generate() {
+    let data = load_data().expect("Unable to load data");
+    fs::remove_dir_all(get_dir() + "/todo").expect("error purging old");
+    for subject in data.subjects {
+        for task in subject.tasks {
+            task.generate();
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 enum TaskType {
     Test,
@@ -295,6 +308,23 @@ struct Date {
 impl Task {
     fn new(name : String, due : Date, task_type : TaskType) -> Task {
         Task { name, due, task_type }
+    }
+
+    fn generate(self) {
+        let dir = get_dir() + "/todo";
+        let dir = dir.as_str();
+        fs::create_dir_all(dir).expect("unable to create dir");
+        let date = self.due;
+        let date = format!("{}-{}-{}", date.year, date.month, date.day);
+        let file_path = dir.to_owned() + "/" + date.as_str();
+        let file_path = file_path.as_str();
+        if !std::path::Path::new(file_path).exists() {
+            let mut file = OpenOptions::new().write(true).create(true).open(file_path).expect("error opening file");
+            writeln!(file, "Todo").expect("Error writing to file");
+            writeln!(file, "#todo").expect("Error writing to file");
+        }
+        let mut file = OpenOptions::new().append(true).open(file_path).expect("error opening file");
+        writeln!(file, "- [ ] {}", self.name).expect("Error writing to file");
     }
 }
 

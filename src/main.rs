@@ -4,22 +4,21 @@ use std::io::prelude::*;
 use chrono::Datelike;
 
 use colored::Colorize;
-use terminal_size::{Width, Height, terminal_size};
+use terminal_size::{Width, terminal_size};
 use serde::{Serialize, Deserialize};
 
 fn main() {
     
     let args = get_args();
 
-    init(); // Make sure nothing breaks later :0
+    init().expect("Unable to initialize"); // Make sure nothing breaks later :0
     parse_args(args);
-    //help();
 }
 
 fn get_width() -> usize {
     let size = terminal_size().expect("Terminal size not found");
-    let (Width(W),Height(H)) = size; // w,h are now variables :)
-    W.into()
+    let Width(w) = size.0;
+    w.into()
 }
 fn get_args() -> Vec<String> {
     let mut args : Vec<String> = env::args().collect();
@@ -42,16 +41,16 @@ fn parse_args(args : Vec<String>) {
         help();
     }
 }
-struct Help_Item {
+struct HelpItem {
     name : String,
     desc : String,
     head : bool,
 }
-impl Help_Item {
-    fn new(name : &str, desc : &str, head : bool) -> Help_Item {
+impl HelpItem {
+    fn new(name : &str, desc : &str, head : bool) -> HelpItem {
         let name = if head { format!(" {} ", name) } else { name.to_string() };
         let desc = desc.to_string();
-        Help_Item { name, desc, head }
+        HelpItem { name, desc, head }
     }
     fn print(self, w : usize) {
         if self.head {
@@ -65,18 +64,18 @@ impl Help_Item {
 fn help() {
     let w = get_width();
     println!("\n{:=^width$}", " Help ".red(), width=w);
-    let mut items : Vec<Help_Item> = vec![];
+    let mut items : Vec<HelpItem> = vec![];
 
-    items.push(Help_Item::new("init", "Set current directory as vault", false));
-    items.push(Help_Item::new("subject", "Modify subjects", true));
-    items.push(Help_Item::new("add", "Add subject", false));
-    items.push(Help_Item::new("task", "Modify tasks", true));
-    items.push(Help_Item::new("add", "Add task", false));
+    items.push(HelpItem::new("init", "Set current directory as vault", false));
+    items.push(HelpItem::new("subject", "Modify subjects", true));
+    items.push(HelpItem::new("add", "Add subject", false));
+    items.push(HelpItem::new("task", "Modify tasks", true));
+    items.push(HelpItem::new("add", "Add task", false));
+    items.push(HelpItem::new("generate", "Generate todo", true));
 
     for item in items {
         item.print(w);
     }
-    //println!("\n{:^width$}\n{:^width$}", "init".cyan().bold(), "Set current directory as vault".blue(), width=w);
 }
 
 fn init() -> Result<(), String>{
@@ -84,7 +83,7 @@ fn init() -> Result<(), String>{
     // Make sure config exists
     let config = match env::var("HOME") {
         Ok(dir) => dir,
-        Err(e) => panic!("HOME is not set"),
+        Err(_e) => panic!("HOME is not set"),
     };
     let path = format!("{}/.config/todo", config);
     fs::create_dir_all(path).expect("Could not create config directory ;(");
@@ -178,7 +177,7 @@ fn parse_task(args : Vec<String>) {
 }
 
 fn select_subject() -> usize {
-    let mut data = load_data().expect("cannot load data");
+    let data = load_data().expect("cannot load data");
     return if data.subjects.len() > 1 {
         loop {
             println!("here are all subjects:");
@@ -248,7 +247,7 @@ fn complete_task() {
         std::io::stdin().read_line(&mut line).unwrap();
         line = line.split("\n").collect::<Vec<&str>>()[0].to_string();
         if let Ok(n) = line.parse::<usize>() {
-            if let Some(task) = data.subjects[subject].tasks.get(n) {
+            if let Some(_task) = data.subjects[subject].tasks.get(n) {
                 break n;
             } else {
                 println!{"{}", "That is not an option".red()};
@@ -268,7 +267,7 @@ fn generate() {
     let data = load_data().expect("Unable to load data");
     match fs::remove_dir_all(get_dir() + "/todo") {
         Err(ref e) if e.kind() == std::io::ErrorKind::NotFound => {},
-        Err(e) => panic!("Unable to purge file"),
+        Err(_e) => panic!("Unable to purge file"),
         _ => {}
     }
     for subject in data.subjects {
@@ -358,12 +357,12 @@ impl Data {
 impl Date {
     fn new() -> Date {
         let current_date = chrono::Utc::now().date();
-        let mut nums : Vec<u16> = vec![];
+        let mut nums : Vec<u16>;
         'main :loop {
             println!("{}", "Please enter the due date in form dd-mm-yyyy. Ignored information will use current date:".cyan());
             nums = vec![];
             let mut line = String::new();
-            std::io::stdin().read_line(&mut line);
+            std::io::stdin().read_line(&mut line).expect("unable to read file");
             let date : Vec<&str> = line.split("\n").collect::<Vec<&str>>()[0].split("-").collect();
             let date : Vec<&str> = if date[0] == "" {vec![]} else {date}; // If its empty, use todays date
             for i in 0..3 {

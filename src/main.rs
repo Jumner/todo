@@ -34,7 +34,7 @@ fn parse_args(args : Vec<String>) {
             "init" => set_dir(),
             "subject" => parse_subject(args),
             "task" => parse_task(args),
-            "generate" => generate(),
+            "update" => generate(),
             _ => panic!("Wrong args :p"),
         }
     } else {
@@ -72,7 +72,7 @@ fn help() {
     items.push(HelpItem::new("task", "Modify tasks", true));
     items.push(HelpItem::new("add", "Add task", false));
     items.push(HelpItem::new("complete", "Complete a task", false));
-    items.push(HelpItem::new("generate", "Generate todo", true));
+    items.push(HelpItem::new("update", "Update todo", true));
 
     for item in items {
         item.print(w);

@@ -70,6 +70,7 @@ fn help() { // Help page
     items.push(HelpItem::new("add", "Add subject", false));
     items.push(HelpItem::new("task", "Modify tasks", true));
     items.push(HelpItem::new("add", "Add task", false));
+    items.push(HelpItem::new("Update", "Update date of task", false));
     items.push(HelpItem::new("complete", "Complete a task", false));
     items.push(HelpItem::new("update", "Update todo", true));
 
@@ -168,6 +169,7 @@ fn parse_task(args : Vec<String>) { // Parse the task
     if let Some(arg) = arg { // Arg passed in
         match arg.as_str() {
             "add" => add_task(),
+            "update" => update_task(),
             "complete" => complete_task(),
             _ => help(),
         }
@@ -203,6 +205,29 @@ fn select_subject() -> usize { // Ask user to pick a subject
     };
     
 }
+
+fn select_task(subject : usize) -> usize {
+    let data = load_data().expect("Unable to load data");
+    loop {
+        println!("{}", "Which of the following"); // Print tasks
+        for (i, task) in data.subjects[subject].tasks.iter().enumerate() {
+            println!("{}) {}", i, task.name.green());
+        }
+        let mut line = String::new();
+        std::io::stdin().read_line(&mut line).unwrap();
+        line = line.split("\n").collect::<Vec<&str>>()[0].to_string(); // Read input
+        if let Ok(n) = line.parse::<usize>() { // If it can be parsed
+            if let Some(_task) = data.subjects[subject].tasks.get(n) { // If its a task
+                break n; // Return it 
+            } else { // Not a task
+                println!{"{}", "That is not an option".red()};
+            }
+        } else { // Cant parse
+            println!("{}", "Unable to parse".red());
+        }
+    }
+}
+
 fn add_task() { // Add a task
     let mut data = load_data().expect("cannot load data");
     let n = select_subject(); // Select the subject
@@ -235,28 +260,18 @@ fn add_task() { // Add a task
     save_data(data).expect("unable to save data");
 }
 
+fn update_task() {
+    let mut data = load_data().expect("unable to load data");
+    let subject = select_subject(); // Select subject
+    let i = select_task(subject); // Select task
+    data.subjects[subject].tasks[i].due = Date::new(); // Reset date
+    save_data(data).expect("Unable to save data");
+}
+
 fn complete_task() { // Complete a task
     let mut data = load_data().expect("unable to load data");
     let subject = select_subject(); // Select subject
-    let i = loop {
-        println!("{}", "Which of the following"); // Print tasks
-        for (i, task) in data.subjects[subject].tasks.iter().enumerate() {
-            println!("{}) {}", i, task.name.green());
-        }
-        let mut line = String::new();
-        std::io::stdin().read_line(&mut line).unwrap();
-        line = line.split("\n").collect::<Vec<&str>>()[0].to_string(); // Read input
-        if let Ok(n) = line.parse::<usize>() { // If it can be parsed
-            if let Some(_task) = data.subjects[subject].tasks.get(n) { // If its a task
-                break n; // Return it 
-            } else { // Not a task
-                println!{"{}", "That is not an option".red()};
-            }
-        } else { // Cant parse
-            println!("{}", "Unable to parse".red());
-        }
-    };
-
+    let i = select_task(subject);
     data.subjects[subject].tasks.remove(i); // Delete that boi
 
     save_data(data).expect("Unable to save data");

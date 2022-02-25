@@ -117,6 +117,7 @@ fn load_data() -> Result<Data, String> { // Load all the date from the .todo jso
 fn save_data(data : Data) -> Result<(), String> { // Save data to the .todo json file
     let json = serde_json::to_string(&data).expect("cannot serialize data");
     fs::write(get_store(), json).expect("Connot write data");
+    generate(); // Update it once we save
     Ok(())
 }
 

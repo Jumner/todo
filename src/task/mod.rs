@@ -1,13 +1,15 @@
+use anyhow::{Result, anyhow};
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::time::Duration;
 use std::time::Instant;
+pub mod cli;
 mod status;
 pub use status::Status;
 
 #[derive(Debug)]
 pub struct Task {
-    id: usize,
+    id: Option<usize>,
     name: String,
     description: String,
     status: Status,
@@ -19,7 +21,6 @@ pub struct Task {
 
 impl Task {
     pub fn new(
-        id: usize,
         name: String,
         description: String,
         estimated_time: Duration,
@@ -27,15 +28,27 @@ impl Task {
         deadline: Instant,
     ) -> Self {
         return Task {
-            id,
+            id: None,
             name,
             description,
-            status: Status::INCOMPLETE,
+            status: Status::INVALID,
             estimated_time,
             estimated_value,
             deadline,
             subtasks: vec![],
         };
+    }
+
+    pub fn initialize(&mut self, id: usize) -> Result<()> {
+        if let Some(id) = self.id {
+            return Err(anyhow!("ID is already initialized ({})", id));
+        }
+        self.id = Some(id);
+        match self.status {
+            Status::INVALID => self.status = Status::INCOMPLETE,
+            status => return Err(anyhow!("Status is not invalid ({})", status)),
+        };
+        return Ok(());
     }
 
     pub fn declare_subtask(&mut self, task: Rc<RefCell<Task>>) {
@@ -53,7 +66,7 @@ impl Task {
 
 impl std::fmt::Display for Task {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "ID: {}", self.id).unwrap();
+        writeln!(f, "ID: {:?}", self.id).unwrap();
         writeln!(f, "Name: {}", self.name).unwrap();
         writeln!(f, "Description: {}", self.description).unwrap();
         writeln!(f, "Status: {}", self.status).unwrap();

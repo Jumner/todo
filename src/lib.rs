@@ -1,13 +1,12 @@
 mod list;
-mod task;
+pub mod task;
 use std::time::{Duration, Instant};
 
 pub use list::List;
-pub use task::Task;
+use task::Task;
 
 pub fn forgor() {
     Task::new(
-        5,
         String::from("Name"),
         String::from("Description"),
         Duration::from_secs(5),

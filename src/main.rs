@@ -1,33 +1,18 @@
-use std::{
-    cell::RefCell,
-    rc::Rc,
-    time::{Duration, Instant},
-};
+use std::{cell::RefCell, rc::Rc, time::Duration};
 
-use todo::{List, Task};
+use inquire::Text;
+
+use todo::{List, task::cli::get_task};
 
 fn main() {
-    let task = Rc::new(RefCell::new(Task::new(
-        4,
-        String::from("Name"),
-        String::from("Description"),
-        Duration::from_secs(7),
-        10,
-        Instant::now(),
-    )));
-    let subtask = Rc::new(RefCell::new(Task::new(
-        5,
-        String::from("Subtask"),
-        String::from("Subdescription"),
-        Duration::from_secs(5),
-        10,
-        Instant::now(),
-    )));
+    let task = Rc::new(RefCell::new(get_task()));
+    let subtask = Rc::new(RefCell::new(get_task()));
     task.borrow_mut().declare_subtask(subtask.clone());
     let mut list = List::new(vec![Duration::from_secs(10)]);
-    list.add_task(task);
-    list.add_task(subtask);
+    list.add_task(task).unwrap();
+    list.add_task(subtask).unwrap();
     println!("{}", list);
     list.sort();
     println!("{}", list);
+    println!("{}", Text::new("Hellooooo?").prompt().unwrap());
 }

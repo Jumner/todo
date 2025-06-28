@@ -1,7 +1,4 @@
 use std::{cell::RefCell, rc::Rc, time::Duration};
-
-use inquire::Text;
-
 use todo::{List, task::cli::get_task};
 
 fn main() {
@@ -14,5 +11,4 @@ fn main() {
     println!("{}", list);
     list.sort();
     println!("{}", list);
-    println!("{}", Text::new("Hellooooo?").prompt().unwrap());
 }

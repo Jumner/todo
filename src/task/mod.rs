@@ -1,8 +1,8 @@
 use anyhow::{Result, anyhow};
+use chrono::NaiveDateTime;
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::time::Duration;
-use std::time::Instant;
 pub mod cli;
 mod status;
 pub use status::Status;
@@ -15,7 +15,7 @@ pub struct Task {
     status: Status,
     estimated_time: Duration,
     estimated_value: usize,
-    deadline: Instant,
+    deadline: NaiveDateTime,
     subtasks: Vec<Rc<RefCell<Task>>>,
 }
 
@@ -25,7 +25,7 @@ impl Task {
         description: String,
         estimated_time: Duration,
         estimated_value: usize,
-        deadline: Instant,
+        deadline: NaiveDateTime,
     ) -> Self {
         return Task {
             id: None,

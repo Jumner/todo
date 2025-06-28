@@ -11,4 +11,5 @@ fn main() {
     println!("{}", list);
     list.sort();
     println!("{}", list);
+    println!("{}", list.pick_task().unwrap().borrow());
 }

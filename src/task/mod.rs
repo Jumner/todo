@@ -9,7 +9,7 @@ pub use status::Status;
 #[derive(Debug)]
 pub struct Task {
     pub id: Option<usize>,
-    name: String,
+    pub name: String,
     description: String,
     status: Status,
     estimated_time: TimeDelta,

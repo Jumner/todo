@@ -1,11 +1,11 @@
-use std::time::Duration;
+use std::{cell::RefCell, rc::Rc, time::Duration};
 
 use crate::Task;
 
 #[derive(Debug)]
 pub struct List {
     time: Vec<Duration>,
-    tasks: Vec<Task>,
+    tasks: Vec<Rc<RefCell<Task>>>,
 }
 
 impl List {
@@ -15,7 +15,7 @@ impl List {
             tasks: Vec::new(),
         }
     }
-    pub fn add_task(&mut self, task: Task) {
+    pub fn add_task(&mut self, task: Rc<RefCell<Task>>) {
         self.tasks.push(task);
     }
 
@@ -29,7 +29,7 @@ impl std::fmt::Display for List {
         writeln!(f, "{:?}", self.time).unwrap();
         writeln!(f, "Tasks:").unwrap();
         for task in self.tasks.iter() {
-            write!(f, "{}", task).unwrap();
+            write!(f, "{}", task.borrow()).unwrap();
         }
         write!(f, "")
     }

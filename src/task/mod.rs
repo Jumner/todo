@@ -1,3 +1,5 @@
+use std::cell::RefCell;
+use std::rc::Rc;
 use std::time::Duration;
 use std::time::Instant;
 mod status;
@@ -12,7 +14,7 @@ pub struct Task {
     estimated_time: Duration,
     estimated_value: usize,
     deadline: Instant,
-    subtasks: Vec<usize>,
+    subtasks: Vec<Rc<RefCell<Task>>>,
 }
 
 impl Task {
@@ -36,7 +38,7 @@ impl Task {
         };
     }
 
-    pub fn declare_subtask(&mut self, task: usize) {
+    pub fn declare_subtask(&mut self, task: Rc<RefCell<Task>>) {
         self.subtasks.push(task);
     }
 
@@ -59,7 +61,7 @@ impl std::fmt::Display for Task {
         writeln!(f, "Estimated Value: {}", self.estimated_value).unwrap();
         writeln!(f, "Deadline: {:?}", self.deadline).unwrap();
         for subtask in self.subtasks.iter() {
-            writeln!(f, "Subtask: {}", subtask).unwrap();
+            writeln!(f, "Subtask: {}", subtask.borrow().name).unwrap();
         }
         write!(f, "")
     }

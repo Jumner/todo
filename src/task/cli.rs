@@ -1,6 +1,6 @@
-use chrono::{self, NaiveDateTime, NaiveTime};
+use chrono::{self, NaiveTime};
 use inquire::{CustomType, DateSelect, Text};
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 use crate::task::Task;
 

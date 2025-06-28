@@ -9,7 +9,7 @@ pub use status::Status;
 
 #[derive(Debug)]
 pub struct Task {
-    id: Option<usize>,
+    pub id: Option<usize>,
     name: String,
     description: String,
     status: Status,

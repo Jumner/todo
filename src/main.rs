@@ -1,5 +1,5 @@
 use std::{cell::RefCell, rc::Rc, time::Duration};
-use todo::{List, task::cli::get_task};
+use todo::{list::List, task::cli::get_task};
 
 fn main() {
     let task = Rc::new(RefCell::new(get_task()));

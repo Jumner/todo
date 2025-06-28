@@ -2,7 +2,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use anyhow::Result;
 use chrono::{self, NaiveDate, NaiveTime, TimeDelta};
-use inquire::{Confirm, CustomType, DateSelect, Text};
+use inquire::{CustomType, DateSelect, Text};
 
 use crate::task::Task;
 
@@ -86,7 +86,7 @@ fn get_description(default: Option<String>) -> Result<String> {
     return Ok(description);
 }
 
-pub fn update_task(task: Rc<RefCell<Task>>) {
+pub fn update_task(task: Rc<RefCell<Task>>) -> Result<()> {
     let mut task = task.borrow_mut();
     let name = get_name(Some(task.name.clone())).unwrap();
     let description = get_description(Some(task.description.clone())).unwrap();
@@ -102,4 +102,5 @@ pub fn update_task(task: Rc<RefCell<Task>>) {
     task.estimated_time = TimeDelta::try_hours(estimated_time as i64).unwrap();
     task.estimated_value = estimated_value;
     task.deadline = date.and_time(time);
+    Ok(())
 }

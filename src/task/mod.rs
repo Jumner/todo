@@ -1,8 +1,7 @@
 use anyhow::{Result, anyhow};
-use chrono::NaiveDateTime;
+use chrono::{NaiveDateTime, TimeDelta};
 use std::cell::RefCell;
 use std::rc::Rc;
-use std::time::Duration;
 pub mod cli;
 mod status;
 pub use status::Status;
@@ -13,7 +12,7 @@ pub struct Task {
     name: String,
     description: String,
     status: Status,
-    estimated_time: Duration,
+    estimated_time: TimeDelta,
     estimated_value: usize,
     deadline: NaiveDateTime,
     subtasks: Vec<Rc<RefCell<Task>>>,
@@ -23,7 +22,7 @@ impl Task {
     pub fn new(
         name: String,
         description: String,
-        estimated_time: Duration,
+        estimated_time: TimeDelta,
         estimated_value: usize,
         deadline: NaiveDateTime,
     ) -> Self {
@@ -56,7 +55,7 @@ impl Task {
     }
 
     pub fn cost(&self) -> f32 {
-        return self.estimated_time.as_secs() as f32;
+        return self.estimated_time.as_seconds_f32();
     }
 
     pub fn complete(&mut self) {
@@ -70,7 +69,7 @@ impl std::fmt::Display for Task {
         writeln!(f, "Name: {}", self.name).unwrap();
         writeln!(f, "Description: {}", self.description).unwrap();
         writeln!(f, "Status: {}", self.status).unwrap();
-        writeln!(f, "Estimated Time: {:?}", self.estimated_time).unwrap();
+        writeln!(f, "Estimated Hours: {}", self.estimated_time.num_hours()).unwrap();
         writeln!(f, "Estimated Value: {}", self.estimated_value).unwrap();
         writeln!(f, "Deadline: {:?}", self.deadline).unwrap();
         for subtask in self.subtasks.iter() {

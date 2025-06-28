@@ -1,6 +1,5 @@
-use chrono::{self, NaiveTime};
+use chrono::{self, NaiveTime, TimeDelta};
 use inquire::{CustomType, DateSelect, Text};
-use std::time::Duration;
 
 use crate::task::Task;
 
@@ -13,7 +12,13 @@ pub fn get_task() -> Task {
         .with_help_message("Describe the task")
         .prompt()
         .unwrap();
-    let estimated_time = Duration::from_secs(10);
+    let estimated_time = CustomType::new("Estimated Hours Required")
+        .with_formatter(&|i: usize| format!("{i} Hours"))
+        .with_error_message("Please type a valid number")
+        .with_help_message("Enter the number of hours required")
+        .prompt()
+        .unwrap();
+
     let estimated_value = CustomType::new("Estimated Value")
         .with_formatter(&|i: usize| format!("${i}"))
         .with_error_message("Please type a valid number")
@@ -33,7 +38,7 @@ pub fn get_task() -> Task {
     return Task::new(
         name,
         description,
-        estimated_time,
+        TimeDelta::try_hours(estimated_time as i64).unwrap(),
         estimated_value,
         date.and_time(time),
     );

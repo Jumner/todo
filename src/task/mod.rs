@@ -16,7 +16,6 @@ pub struct Task {
     estimated_value: usize,
     deadline: NaiveDateTime,
     subtasks: Vec<Rc<RefCell<Task>>>,
-    leaf: bool,
 }
 
 impl Task {
@@ -36,7 +35,6 @@ impl Task {
             estimated_value,
             deadline,
             subtasks: vec![],
-            leaf: true,
         };
     }
 
@@ -54,7 +52,6 @@ impl Task {
 
     pub fn declare_subtask(&mut self, task: Rc<RefCell<Task>>) {
         self.subtasks.push(task);
-        self.leaf = false;
     }
 
     pub fn cost(&self) -> f32 {

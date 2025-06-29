@@ -8,7 +8,7 @@ use itertools::Itertools;
 #[derive(Debug)]
 pub struct List {
     time: Vec<Duration>,
-    tasks: HashMap<usize, Rc<RefCell<Task>>>,
+    tasks: HashMap<String, Rc<RefCell<Task>>>,
     id_counter: usize,
 }
 
@@ -23,7 +23,7 @@ impl List {
     pub fn add_task(&mut self, task: Rc<RefCell<Task>>) -> Result<()> {
         task.borrow_mut().initialize(self.id_counter).unwrap();
         self.id_counter += 1;
-        self.tasks.insert(task.borrow().id.unwrap(), task.clone());
+        self.tasks.insert(task.borrow().name.clone(), task.clone());
         return Ok(());
     }
 

@@ -59,11 +59,11 @@ impl List {
         // Set subtasks
         // Get list of tasks
         let map = self.get_name_map();
-        let tasks = get_tasks(map.clone(), |other| {
+        let total_tasks = get_tasks(map.clone(), |other| {
             other.borrow().name != task.borrow().name
         })
         .unwrap();
-        let default: Vec<usize> = tasks
+        let current_subtasks: Vec<usize> = total_tasks
             .iter()
             .enumerate()
             .filter_map(|(i, other)| {
@@ -73,14 +73,26 @@ impl List {
                 None
             })
             .collect();
-        let task_select = MultiSelect::new("Select Tasks", tasks)
+        let selected_subtasks = MultiSelect::new("Select Tasks", total_tasks.clone())
             // .with_help_message("")
             .with_vim_mode(true)
-            .with_default(&default)
+            .with_default(&current_subtasks)
             .with_help_message("Select subtasks")
             .prompt()
             .unwrap();
-        println!("{:?}", task_select);
+        println!("{:?}", selected_subtasks);
+        current_subtasks.iter().for_each(|&subtask| {
+            if !selected_subtasks.contains(&total_tasks[subtask]) {
+                task.borrow_mut()
+                    .set_subtask(total_tasks[subtask].clone(), None);
+            }
+        });
+        selected_subtasks.iter().for_each(|other| {
+            if !task.borrow().subtasks.contains_key(other) {
+                task.borrow_mut()
+                    .set_subtask(other.clone(), Some(self.tasks.get(other).unwrap().clone()));
+            }
+        });
         // Assign Parent
         Ok(())
     }

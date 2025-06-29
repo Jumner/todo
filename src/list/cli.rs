@@ -125,6 +125,12 @@ impl List {
         Ok(())
     }
 
+    pub fn complete_task(&mut self, task: Rc<RefCell<Task>>) -> Result<()> {
+        task.borrow_mut().complete()?;
+        self.remove_task(task).unwrap();
+        Ok(())
+    }
+
     pub fn update_subtasks(&mut self, task: Rc<RefCell<Task>>) {
         // get list of parents
         let mut parents = HashSet::new();

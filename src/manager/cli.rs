@@ -32,6 +32,12 @@ pub fn main_menu(list: &mut List) {
             let task = list.pick_task().unwrap();
             list.modify_task(task).unwrap();
         }
+        "Complete Task" => {
+            let task = list.pick_task().unwrap();
+            if list.complete_task(task).is_err() {
+                println!("Dependency not completed");
+            }
+        }
         _ => {
             println!("Unknown Action");
         }

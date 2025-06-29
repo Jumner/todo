@@ -63,6 +63,12 @@ pub fn spin() {
     list.add_task(subsubtask.clone()).unwrap();
     list.add_task(other_subtask.clone()).unwrap();
     list.add_task(other_subsubtask.clone()).unwrap();
+    task.borrow_mut().add_subtask(subtask.clone());
+    task.borrow_mut().add_subtask(other_subtask.clone());
+    subtask.borrow_mut().add_subtask(subsubtask.clone());
+    other_subtask
+        .borrow_mut()
+        .add_subtask(other_subsubtask.clone());
     loop {
         main_menu(&mut list);
     }

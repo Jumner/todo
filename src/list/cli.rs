@@ -61,8 +61,9 @@ impl List {
         let task = self.pick_task().unwrap();
         update_task(task.clone()).unwrap();
         // Set subtasks
-        self.update_subtasks(task);
+        self.update_subtasks(task.clone());
         // Assign Parent
+        self.update_supertasks(task.clone());
 
         // TODO filter out direct or indirect children
         Ok(())
@@ -112,6 +113,61 @@ impl List {
                 if !task.borrow().subtasks.contains_key(other) {
                     task.borrow_mut()
                         .add_subtask(self.tasks.get(other).unwrap().clone());
+                }
+            });
+        }
+    }
+    fn update_supertasks(&mut self, task: Rc<RefCell<Task>>) {
+        // get list of children
+        let mut children = HashSet::new();
+        let mut stack = vec![task.borrow().name.clone()];
+        while let Some(child) = stack.pop() {
+            for subtask in self.tasks.get(&child).unwrap().borrow().subtasks.keys() {
+                stack.push(subtask.clone());
+                children.insert(subtask.clone());
+            }
+        }
+        // Get list of tasks
+        let map = self.get_name_map();
+        let total_tasks = get_tasks(map.clone(), |other| {
+            other.borrow().name != task.borrow().name
+                && !children.contains(&other.borrow().name.clone())
+        })
+        .unwrap();
+        let current_supertasks: Vec<usize> = total_tasks
+            .iter()
+            .enumerate()
+            .filter_map(|(i, other)| {
+                if task.borrow().supertasks.contains(other) {
+                    return Some(i);
+                }
+                None
+            })
+            .collect();
+        let selected_subtasks = MultiSelect::new("Select Tasks", total_tasks.clone())
+            // .with_help_message("")
+            .with_vim_mode(true)
+            .with_default(&current_supertasks)
+            .with_help_message("Select supertasks")
+            .prompt();
+        if let Ok(selected_supertasks) = selected_subtasks {
+            current_supertasks.iter().for_each(|&supertask| {
+                if !selected_supertasks.contains(&total_tasks[supertask]) {
+                    let name = task.borrow().name.clone();
+                    self.tasks
+                        .get(&total_tasks[supertask])
+                        .unwrap()
+                        .borrow_mut()
+                        .remove_subtask(name);
+                }
+            });
+            selected_supertasks.iter().for_each(|other| {
+                if !task.borrow().supertasks.contains(other) {
+                    self.tasks
+                        .get(other)
+                        .unwrap()
+                        .borrow_mut()
+                        .add_subtask(task.clone());
                 }
             });
         }

@@ -54,8 +54,34 @@ impl List {
     }
 
     pub fn update_task(&mut self) -> Result<()> {
-        update_task(self.pick_task().unwrap()).unwrap();
-
+        let task = self.pick_task().unwrap();
+        update_task(task.clone()).unwrap();
+        // Set subtasks
+        // Get list of tasks
+        let map = self.get_name_map();
+        let tasks = get_tasks(map.clone(), |other| {
+            other.borrow().name != task.borrow().name
+        })
+        .unwrap();
+        let default: Vec<usize> = tasks
+            .iter()
+            .enumerate()
+            .filter_map(|(i, other)| {
+                if task.borrow().subtasks.contains_key(other) {
+                    return Some(i);
+                }
+                None
+            })
+            .collect();
+        let task_select = MultiSelect::new("Select Tasks", tasks)
+            // .with_help_message("")
+            .with_vim_mode(true)
+            .with_default(&default)
+            .with_help_message("Select subtasks")
+            .prompt()
+            .unwrap();
+        println!("{:?}", task_select);
+        // Assign Parent
         Ok(())
     }
 }

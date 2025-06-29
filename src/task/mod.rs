@@ -16,7 +16,7 @@ pub struct Task {
     estimated_time: TimeDelta,
     estimated_value: usize,
     deadline: NaiveDateTime,
-    subtasks: HashMap<String, Rc<RefCell<Task>>>,
+    pub subtasks: HashMap<String, Rc<RefCell<Task>>>,
 }
 
 impl Task {
@@ -51,9 +51,15 @@ impl Task {
         return Ok(());
     }
 
-    pub fn declare_subtask(&mut self, task: Rc<RefCell<Task>>) {
-        let name = task.borrow().name.clone();
-        self.subtasks.insert(name, task);
+    pub fn set_subtask(&mut self, name: String, task: Option<Rc<RefCell<Task>>>) {
+        match task {
+            Some(task) => self.subtasks.insert(name, task),
+            _ => self.subtasks.remove(&name),
+        };
+    }
+
+    pub fn get_subtasks(&self) -> Vec<String> {
+        self.subtasks.keys().cloned().collect()
     }
 
     pub fn cost(&self) -> f32 {

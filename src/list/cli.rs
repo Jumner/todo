@@ -33,8 +33,25 @@ impl List {
         }
         return map;
     }
+    pub fn pick_task(&self) -> Result<Rc<RefCell<Task>>> {
+        match Select::new("Search Type", vec!["Tree", "List"])
+            .with_vim_mode(true)
+            .prompt()
+            .unwrap()
+        {
+            "Tree" => {
+                return self.pick_task_tree();
+            }
+            "List" => {
+                return self.pick_task_list();
+            }
+            _ => {
+                unreachable!();
+            }
+        }
+    }
 
-    pub fn pick_task_list(&self) -> Result<Rc<RefCell<Task>>> {
+    fn pick_task_list(&self) -> Result<Rc<RefCell<Task>>> {
         let map = self.get_name_map();
         let task = Select::new("Select a Task", get_tasks(map.clone(), |_| true).unwrap())
             // .with_help_message("")
@@ -44,7 +61,7 @@ impl List {
         return Ok(map.get(&task).unwrap().clone());
     }
 
-    pub fn pick_task_hierarchy(&self) -> Result<Rc<RefCell<Task>>> {
+    fn pick_task_tree(&self) -> Result<Rc<RefCell<Task>>> {
         let map = self.get_name_map();
         let mut root = Select::new(
             "Select a Task",
@@ -99,15 +116,12 @@ impl List {
             .collect());
     }
 
-    pub fn update_task(&mut self) -> Result<()> {
-        let task = self.pick_task_hierarchy().unwrap();
+    pub fn modify_task(&mut self, task: Rc<RefCell<Task>>) -> Result<()> {
         update_task(task.clone()).unwrap();
         // Set subtasks
         self.update_subtasks(task.clone());
         // Assign Parent
         self.update_supertasks(task.clone());
-
-        // TODO filter out direct or indirect children
         Ok(())
     }
 

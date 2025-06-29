@@ -84,16 +84,18 @@ impl List {
         current_subtasks.iter().for_each(|&subtask| {
             if !selected_subtasks.contains(&total_tasks[subtask]) {
                 task.borrow_mut()
-                    .set_subtask(total_tasks[subtask].clone(), None);
+                    .remove_subtask(total_tasks[subtask].clone());
             }
         });
         selected_subtasks.iter().for_each(|other| {
             if !task.borrow().subtasks.contains_key(other) {
                 task.borrow_mut()
-                    .set_subtask(other.clone(), Some(self.tasks.get(other).unwrap().clone()));
+                    .add_subtask(self.tasks.get(other).unwrap().clone());
             }
         });
+        // TODO filter out direct or indirect parents
         // Assign Parent
+        // TODO filter out direct or indirect children
         Ok(())
     }
 }

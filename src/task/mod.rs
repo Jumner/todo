@@ -1,7 +1,7 @@
 use anyhow::{Result, anyhow};
 use chrono::{NaiveDateTime, TimeDelta};
 use std::cell::RefCell;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 pub mod cli;
 mod status;
@@ -17,6 +17,7 @@ pub struct Task {
     estimated_value: usize,
     deadline: NaiveDateTime,
     pub subtasks: HashMap<String, Rc<RefCell<Task>>>,
+    pub supertasks: HashSet<String>,
 }
 
 impl Task {
@@ -36,6 +37,7 @@ impl Task {
             estimated_value,
             deadline,
             subtasks: HashMap::new(),
+            supertasks: HashSet::new(),
         };
     }
 
@@ -51,11 +53,21 @@ impl Task {
         return Ok(());
     }
 
-    pub fn set_subtask(&mut self, name: String, task: Option<Rc<RefCell<Task>>>) {
-        match task {
-            Some(task) => self.subtasks.insert(name, task),
-            _ => self.subtasks.remove(&name),
-        };
+    pub fn add_subtask(&mut self, task: Rc<RefCell<Task>>) {
+        self.subtasks
+            .insert(task.borrow().name.clone(), task.clone());
+        task.borrow_mut().supertasks.insert(self.name.clone());
+    }
+
+    pub fn remove_subtask(&mut self, name: String) {
+        self.subtasks
+            .get(&name)
+            .unwrap()
+            .clone()
+            .borrow_mut()
+            .supertasks
+            .remove(&self.name);
+        self.subtasks.remove(&name);
     }
 
     pub fn get_subtasks(&self) -> Vec<String> {
@@ -94,6 +106,9 @@ impl std::fmt::Display for Task {
         writeln!(f, "Deadline: {:?}", self.deadline).unwrap();
         for subtask in self.subtasks.keys() {
             writeln!(f, "Subtask: {}", subtask).unwrap();
+        }
+        for supertask in self.supertasks.iter() {
+            writeln!(f, "Supertask: {}", supertask).unwrap();
         }
         write!(f, "")
     }

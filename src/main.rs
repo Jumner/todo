@@ -38,11 +38,8 @@ fn main() {
     list.add_task(task.clone()).unwrap();
     list.add_task(subtask.clone()).unwrap();
     list.add_task(subsubtask.clone()).unwrap();
-    task.borrow_mut()
-        .set_subtask(subtask.borrow().name.clone(), Some(subtask.clone()));
-    subtask
-        .borrow_mut()
-        .set_subtask(subsubtask.borrow().name.clone(), Some(subsubtask.clone()));
+    task.borrow_mut().add_subtask(subtask.clone());
+    subtask.borrow_mut().add_subtask(subsubtask.clone());
     // println!("{}", list);
     // list.sort();
     println!("{}", list);

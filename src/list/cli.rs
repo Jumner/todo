@@ -55,33 +55,34 @@ impl List {
         .prompt();
         let mut task = map.get(root.as_ref().unwrap()).unwrap().clone();
         loop {
-            if let Ok(name) = root {
-                task = map.get(&name).unwrap().clone();
-                if task.borrow().subtasks.len() == 0 {
-                    return Ok(task);
-                }
-                match Select::new("Search subtasks or select task", vec!["Continue", "Select"])
-                    // .with_help_message("")
-                    .with_vim_mode(true)
-                    .prompt()
-                    .unwrap()
-                {
-                    "Continue" => {}
-                    "Select" => {
-                        return Ok(task);
-                    }
-                    _ => {}
-                }
-                root = Select::new(
-                    "Select a Task",
-                    task.borrow().subtasks.keys().cloned().collect(),
-                )
-                // .with_help_message("")
-                .with_vim_mode(true)
-                .prompt();
+            let name = if let Ok(name) = root {
+                name
             } else {
                 return Ok(task);
+            };
+            task = map.get(&name).unwrap().clone();
+            if task.borrow().subtasks.len() == 0 {
+                return Ok(task);
             }
+            match Select::new("Search subtasks or select task", vec!["Continue", "Select"])
+                // .with_help_message("")
+                .with_vim_mode(true)
+                .prompt()
+                .unwrap()
+            {
+                "Continue" => {}
+                "Select" => {
+                    return Ok(task);
+                }
+                _ => {}
+            }
+            root = Select::new(
+                "Select a Task",
+                task.borrow().subtasks.keys().cloned().collect(),
+            )
+            // .with_help_message("")
+            .with_vim_mode(true)
+            .prompt();
         }
     }
 
@@ -137,27 +138,31 @@ impl List {
                 None
             })
             .collect();
-        let selected_subtasks = MultiSelect::new("Select Tasks", total_tasks.clone())
+        let selected_subtasks = MultiSelect::new("Select subtasks", total_tasks.clone())
             // .with_help_message("")
             .with_vim_mode(true)
             .with_default(&current_subtasks)
             .with_help_message("Select subtasks")
             .prompt();
-        if let Ok(selected_subtasks) = selected_subtasks {
-            current_subtasks.iter().for_each(|&subtask| {
-                if !selected_subtasks.contains(&total_tasks[subtask]) {
-                    task.borrow_mut()
-                        .remove_subtask(total_tasks[subtask].clone());
-                }
-            });
-            selected_subtasks.iter().for_each(|other| {
-                if !task.borrow().subtasks.contains_key(other) {
-                    task.borrow_mut()
-                        .add_subtask(self.tasks.get(other).unwrap().clone());
-                }
-            });
-        }
+        let selected_subtasks = if let Ok(selected_subtasks) = selected_subtasks {
+            selected_subtasks
+        } else {
+            return;
+        };
+        current_subtasks.iter().for_each(|&subtask| {
+            if !selected_subtasks.contains(&total_tasks[subtask]) {
+                task.borrow_mut()
+                    .remove_subtask(total_tasks[subtask].clone());
+            }
+        });
+        selected_subtasks.iter().for_each(|other| {
+            if !task.borrow().subtasks.contains_key(other) {
+                task.borrow_mut()
+                    .add_subtask(self.tasks.get(other).unwrap().clone());
+            }
+        });
     }
+
     fn update_supertasks(&mut self, task: Rc<RefCell<Task>>) {
         // get list of children
         let mut children = HashSet::new();
@@ -185,32 +190,35 @@ impl List {
                 None
             })
             .collect();
-        let selected_subtasks = MultiSelect::new("Select Tasks", total_tasks.clone())
+        let selected_subtasks = MultiSelect::new("Select Supertasks", total_tasks.clone())
             // .with_help_message("")
             .with_vim_mode(true)
             .with_default(&current_supertasks)
             .with_help_message("Select supertasks")
             .prompt();
-        if let Ok(selected_supertasks) = selected_subtasks {
-            current_supertasks.iter().for_each(|&supertask| {
-                if !selected_supertasks.contains(&total_tasks[supertask]) {
-                    let name = task.borrow().name.clone();
-                    self.tasks
-                        .get(&total_tasks[supertask])
-                        .unwrap()
-                        .borrow_mut()
-                        .remove_subtask(name);
-                }
-            });
-            selected_supertasks.iter().for_each(|other| {
-                if !task.borrow().supertasks.contains(other) {
-                    self.tasks
-                        .get(other)
-                        .unwrap()
-                        .borrow_mut()
-                        .add_subtask(task.clone());
-                }
-            });
-        }
+        let selected_supertasks = if let Ok(selected_supertasks) = selected_subtasks {
+            selected_supertasks
+        } else {
+            return;
+        };
+        current_supertasks.iter().for_each(|&supertask| {
+            if !selected_supertasks.contains(&total_tasks[supertask]) {
+                let name = task.borrow().name.clone();
+                self.tasks
+                    .get(&total_tasks[supertask])
+                    .unwrap()
+                    .borrow_mut()
+                    .remove_subtask(name);
+            }
+        });
+        selected_supertasks.iter().for_each(|other| {
+            if !task.borrow().supertasks.contains(other) {
+                self.tasks
+                    .get(other)
+                    .unwrap()
+                    .borrow_mut()
+                    .add_subtask(task.clone());
+            }
+        });
     }
 }

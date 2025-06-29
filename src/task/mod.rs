@@ -16,6 +16,7 @@ pub struct Task {
     estimated_value: usize,
     deadline: NaiveDateTime,
     subtasks: Vec<Rc<RefCell<Task>>>,
+    leaf: bool,
 }
 
 impl Task {
@@ -35,6 +36,7 @@ impl Task {
             estimated_value,
             deadline,
             subtasks: vec![],
+            leaf: true,
         };
     }
 
@@ -52,14 +54,27 @@ impl Task {
 
     pub fn declare_subtask(&mut self, task: Rc<RefCell<Task>>) {
         self.subtasks.push(task);
+        self.leaf = false;
     }
 
     pub fn cost(&self) -> f32 {
         return self.estimated_time.as_seconds_f32();
     }
 
-    pub fn complete(&mut self) {
+    pub fn complete(&mut self) -> Result<()> {
+        for task in self.subtasks.iter().cloned() {
+            match task.borrow().status {
+                Status::COMPLETE => continue,
+                _ => {
+                    return Err(anyhow!(
+                        "Error subtask \"{}\" is not complete",
+                        task.borrow().name.as_str()
+                    ));
+                }
+            }
+        }
         self.status = Status::COMPLETE;
+        Ok(())
     }
 }
 

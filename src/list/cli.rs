@@ -125,7 +125,7 @@ impl List {
         Ok(())
     }
 
-    fn update_subtasks(&mut self, task: Rc<RefCell<Task>>) {
+    pub fn update_subtasks(&mut self, task: Rc<RefCell<Task>>) {
         // get list of parents
         let mut parents = HashSet::new();
         let mut stack = vec![task.borrow().name.clone()];
@@ -177,7 +177,7 @@ impl List {
         });
     }
 
-    fn update_supertasks(&mut self, task: Rc<RefCell<Task>>) {
+    pub fn update_supertasks(&mut self, task: Rc<RefCell<Task>>) {
         // get list of children
         let mut children = HashSet::new();
         let mut stack = vec![task.borrow().name.clone()];

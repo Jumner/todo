@@ -20,10 +20,32 @@ impl List {
             id_counter: 0,
         }
     }
+
     pub fn add_task(&mut self, task: Rc<RefCell<Task>>) -> Result<()> {
         task.borrow_mut().initialize(self.id_counter).unwrap();
         self.id_counter += 1;
         self.tasks.insert(task.borrow().name.clone(), task.clone());
+        self.update_subtasks(task.clone());
+        self.update_supertasks(task.clone());
+        return Ok(());
+    }
+
+    pub fn remove_task(&mut self, task: Rc<RefCell<Task>>) -> Result<()> {
+        self.tasks.remove(&task.borrow().name);
+        // Break subtasks
+        for subtask in task.borrow().subtasks.values().cloned() {
+            subtask.borrow_mut().supertasks.remove(&task.borrow().name);
+        }
+        // Break supertasks
+        for supertask in task.borrow().supertasks.iter() {
+            self.tasks
+                .get(supertask)
+                .cloned()
+                .unwrap()
+                .borrow_mut()
+                .subtasks
+                .remove(&task.borrow().name);
+        }
         return Ok(());
     }
 

@@ -6,7 +6,7 @@ use inquire::{CustomType, DateSelect, Text};
 
 use crate::task::Task;
 
-pub fn get_task() -> Task {
+pub fn create_task() -> Task {
     let name = get_name(None).unwrap();
     let description = get_description(None).unwrap();
     let estimated_time = get_estimated_time(None).unwrap();

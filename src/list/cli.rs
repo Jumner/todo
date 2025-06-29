@@ -1,4 +1,8 @@
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use std::{
+    cell::RefCell,
+    collections::{HashMap, HashSet},
+    rc::Rc,
+};
 
 use crate::task::{Task, cli::update_task};
 use anyhow::Result;
@@ -57,10 +61,28 @@ impl List {
         let task = self.pick_task().unwrap();
         update_task(task.clone()).unwrap();
         // Set subtasks
+        self.update_subtasks(task);
+        // Assign Parent
+
+        // TODO filter out direct or indirect children
+        Ok(())
+    }
+
+    fn update_subtasks(&mut self, task: Rc<RefCell<Task>>) {
+        // get list of parents
+        let mut parents = HashSet::new();
+        let mut stack = vec![task.borrow().name.clone()];
+        while let Some(parent) = stack.pop() {
+            for supertask in self.tasks.get(&parent).unwrap().borrow().supertasks.iter() {
+                stack.push(supertask.clone());
+                parents.insert(supertask.clone());
+            }
+        }
         // Get list of tasks
         let map = self.get_name_map();
         let total_tasks = get_tasks(map.clone(), |other| {
             other.borrow().name != task.borrow().name
+                && !parents.contains(&other.borrow().name.clone())
         })
         .unwrap();
         let current_subtasks: Vec<usize> = total_tasks
@@ -78,24 +100,20 @@ impl List {
             .with_vim_mode(true)
             .with_default(&current_subtasks)
             .with_help_message("Select subtasks")
-            .prompt()
-            .unwrap();
-        println!("{:?}", selected_subtasks);
-        current_subtasks.iter().for_each(|&subtask| {
-            if !selected_subtasks.contains(&total_tasks[subtask]) {
-                task.borrow_mut()
-                    .remove_subtask(total_tasks[subtask].clone());
-            }
-        });
-        selected_subtasks.iter().for_each(|other| {
-            if !task.borrow().subtasks.contains_key(other) {
-                task.borrow_mut()
-                    .add_subtask(self.tasks.get(other).unwrap().clone());
-            }
-        });
-        // TODO filter out direct or indirect parents
-        // Assign Parent
-        // TODO filter out direct or indirect children
-        Ok(())
+            .prompt();
+        if let Ok(selected_subtasks) = selected_subtasks {
+            current_subtasks.iter().for_each(|&subtask| {
+                if !selected_subtasks.contains(&total_tasks[subtask]) {
+                    task.borrow_mut()
+                        .remove_subtask(total_tasks[subtask].clone());
+                }
+            });
+            selected_subtasks.iter().for_each(|other| {
+                if !task.borrow().subtasks.contains_key(other) {
+                    task.borrow_mut()
+                        .add_subtask(self.tasks.get(other).unwrap().clone());
+                }
+            });
+        }
     }
 }

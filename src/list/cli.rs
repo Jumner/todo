@@ -57,7 +57,10 @@ impl List {
         loop {
             if let Ok(name) = root {
                 task = map.get(&name).unwrap().clone();
-                match Select::new("Select a Task", vec!["Continue", "Select"])
+                if task.borrow().subtasks.len() == 0 {
+                    return Ok(task);
+                }
+                match Select::new("Search subtasks or select task", vec!["Continue", "Select"])
                     // .with_help_message("")
                     .with_vim_mode(true)
                     .prompt()

@@ -1,6 +1,7 @@
 use anyhow::{Result, anyhow};
 use chrono::{NaiveDateTime, TimeDelta};
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::rc::Rc;
 pub mod cli;
 mod status;
@@ -15,7 +16,7 @@ pub struct Task {
     estimated_time: TimeDelta,
     estimated_value: usize,
     deadline: NaiveDateTime,
-    subtasks: Vec<Rc<RefCell<Task>>>,
+    subtasks: HashMap<String, Rc<RefCell<Task>>>,
 }
 
 impl Task {
@@ -34,7 +35,7 @@ impl Task {
             estimated_time,
             estimated_value,
             deadline,
-            subtasks: vec![],
+            subtasks: HashMap::new(),
         };
     }
 
@@ -51,7 +52,8 @@ impl Task {
     }
 
     pub fn declare_subtask(&mut self, task: Rc<RefCell<Task>>) {
-        self.subtasks.push(task);
+        let name = task.borrow().name.clone();
+        self.subtasks.insert(name, task);
     }
 
     pub fn cost(&self) -> f32 {
@@ -59,7 +61,7 @@ impl Task {
     }
 
     pub fn complete(&mut self) -> Result<()> {
-        for task in self.subtasks.iter().cloned() {
+        for task in self.subtasks.values().cloned() {
             match task.borrow().status {
                 Status::COMPLETE => continue,
                 _ => {
@@ -84,8 +86,8 @@ impl std::fmt::Display for Task {
         writeln!(f, "Estimated Hours: {}", self.estimated_time.num_hours()).unwrap();
         writeln!(f, "Estimated Value: {}", self.estimated_value).unwrap();
         writeln!(f, "Deadline: {:?}", self.deadline).unwrap();
-        for subtask in self.subtasks.iter() {
-            writeln!(f, "Subtask: {}", subtask.borrow().name).unwrap();
+        for subtask in self.subtasks.keys() {
+            writeln!(f, "Subtask: {}", subtask).unwrap();
         }
         write!(f, "")
     }

@@ -34,7 +34,7 @@ impl List {
         return map;
     }
 
-    pub fn pick_task(&self) -> Result<Rc<RefCell<Task>>> {
+    pub fn pick_task_list(&self) -> Result<Rc<RefCell<Task>>> {
         let map = self.get_name_map();
         let task = Select::new("Select a Task", get_tasks(map.clone(), |_| true).unwrap())
             // .with_help_message("")
@@ -42,6 +42,44 @@ impl List {
             .prompt()
             .unwrap();
         return Ok(map.get(&task).unwrap().clone());
+    }
+
+    pub fn pick_task_hierarchy(&self) -> Result<Rc<RefCell<Task>>> {
+        let map = self.get_name_map();
+        let mut root = Select::new(
+            "Select a Task",
+            get_tasks(map.clone(), |task| task.borrow().supertasks.is_empty()).unwrap(),
+        )
+        // .with_help_message("")
+        .with_vim_mode(true)
+        .prompt();
+        let mut task = map.get(root.as_ref().unwrap()).unwrap().clone();
+        loop {
+            if let Ok(name) = root {
+                task = map.get(&name).unwrap().clone();
+                match Select::new("Select a Task", vec!["Continue", "Select"])
+                    // .with_help_message("")
+                    .with_vim_mode(true)
+                    .prompt()
+                    .unwrap()
+                {
+                    "Continue" => {}
+                    "Select" => {
+                        return Ok(task);
+                    }
+                    _ => {}
+                }
+                root = Select::new(
+                    "Select a Task",
+                    task.borrow().subtasks.keys().cloned().collect(),
+                )
+                // .with_help_message("")
+                .with_vim_mode(true)
+                .prompt();
+            } else {
+                return Ok(task);
+            }
+        }
     }
 
     pub fn pick_tasks(&self) -> Result<Vec<Rc<RefCell<Task>>>> {
@@ -58,7 +96,7 @@ impl List {
     }
 
     pub fn update_task(&mut self) -> Result<()> {
-        let task = self.pick_task().unwrap();
+        let task = self.pick_task_hierarchy().unwrap();
         update_task(task.clone()).unwrap();
         // Set subtasks
         self.update_subtasks(task.clone());

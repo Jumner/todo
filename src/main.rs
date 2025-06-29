@@ -33,13 +33,39 @@ fn main() {
             NaiveTime::from_hms_opt(9, 8, 7).unwrap(),
         ),
     )));
+    let other_subtask = Rc::new(RefCell::new(Task::new(
+        String::from("Other Sub Task"),
+        String::from("Description of sub"),
+        TimeDelta::hours(4),
+        9,
+        NaiveDateTime::new(
+            NaiveDate::from_ymd_opt(2025, 7, 4).unwrap(),
+            NaiveTime::from_hms_opt(10, 9, 8).unwrap(),
+        ),
+    )));
+    let other_subsubtask = Rc::new(RefCell::new(Task::new(
+        String::from("Other Sub Sub Task"),
+        String::from("Description of sub sub"),
+        TimeDelta::hours(3),
+        8,
+        NaiveDateTime::new(
+            NaiveDate::from_ymd_opt(2025, 7, 15).unwrap(),
+            NaiveTime::from_hms_opt(9, 8, 7).unwrap(),
+        ),
+    )));
     // let subtask = Rc::new(RefCell::new(get_task()));
     let mut list = List::new(vec![Duration::from_secs(10)]);
     list.add_task(task.clone()).unwrap();
     list.add_task(subtask.clone()).unwrap();
     list.add_task(subsubtask.clone()).unwrap();
+    list.add_task(other_subtask.clone()).unwrap();
+    list.add_task(other_subsubtask.clone()).unwrap();
     task.borrow_mut().add_subtask(subtask.clone());
+    task.borrow_mut().add_subtask(other_subtask.clone());
     subtask.borrow_mut().add_subtask(subsubtask.clone());
+    other_subtask
+        .borrow_mut()
+        .add_subtask(other_subsubtask.clone());
     // println!("{}", list);
     // list.sort();
     println!("{}", list);

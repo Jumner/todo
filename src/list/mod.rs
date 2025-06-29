@@ -4,8 +4,9 @@ pub mod cli;
 use crate::task::Task;
 use anyhow::Result;
 use itertools::Itertools;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct List {
     time: Vec<Duration>,
     tasks: HashMap<String, Rc<RefCell<Task>>>,

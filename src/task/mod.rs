@@ -1,5 +1,6 @@
 use anyhow::{Result, anyhow};
 use chrono::{NaiveDateTime, TimeDelta};
+use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
@@ -7,7 +8,7 @@ pub mod cli;
 mod status;
 pub use status::Status;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Task {
     pub id: Option<usize>,
     pub name: String,

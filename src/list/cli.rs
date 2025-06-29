@@ -6,7 +6,7 @@ use std::{
 
 use crate::task::{Task, cli::update_task};
 use anyhow::Result;
-use inquire::{MultiSelect, Select};
+use inquire::{Confirm, MultiSelect, Select};
 
 use super::List;
 
@@ -33,17 +33,20 @@ impl List {
         }
         return map;
     }
-    pub fn pick_task(&self) -> Result<Rc<RefCell<Task>>> {
+    pub fn pick_task<F: FnMut(Rc<RefCell<Task>>) -> bool>(
+        &self,
+        filter: F,
+    ) -> Result<Rc<RefCell<Task>>> {
         match Select::new("Search Type", vec!["Tree", "List"])
             .with_vim_mode(true)
             .prompt()
             .unwrap()
         {
             "Tree" => {
-                return self.pick_task_tree();
+                return self.pick_task_tree(filter);
             }
             "List" => {
-                return self.pick_task_list();
+                return self.pick_task_list(filter);
             }
             _ => {
                 unreachable!();
@@ -51,9 +54,20 @@ impl List {
         }
     }
 
-    fn pick_task_list(&self) -> Result<Rc<RefCell<Task>>> {
+    pub fn ordered_list(&self) -> Result<Rc<RefCell<Task>>> {
+        let task = self
+            .pick_task_list(|task: Rc<RefCell<Task>>| task.borrow().subtasks.len() == 0)
+            .unwrap();
+        // TODO sort
+        Ok(task)
+    }
+
+    fn pick_task_list<F: FnMut(Rc<RefCell<Task>>) -> bool>(
+        &self,
+        filter: F,
+    ) -> Result<Rc<RefCell<Task>>> {
         let map = self.get_name_map();
-        let task = Select::new("Select a Task", get_tasks(map.clone(), |_| true).unwrap())
+        let task = Select::new("Select a Task", get_tasks(map.clone(), filter).unwrap())
             // .with_help_message("")
             .with_vim_mode(true)
             .prompt()
@@ -61,7 +75,10 @@ impl List {
         return Ok(map.get(&task).unwrap().clone());
     }
 
-    fn pick_task_tree(&self) -> Result<Rc<RefCell<Task>>> {
+    fn pick_task_tree<F: FnMut(Rc<RefCell<Task>>) -> bool>(
+        &self,
+        mut filter: F,
+    ) -> Result<Rc<RefCell<Task>>> {
         let map = self.get_name_map();
         let mut root = Select::new(
             "Select a Task",
@@ -81,12 +98,15 @@ impl List {
             if task.borrow().subtasks.len() == 0 {
                 return Ok(task);
             }
-            match Select::new("Search subtasks or select task", vec!["Continue", "Select"])
-                // .with_help_message("")
-                .with_vim_mode(true)
-                .prompt()
-                .unwrap()
-            {
+            let mut choice = "Continue";
+            if filter(task.clone()) {
+                choice = Select::new("Search subtasks or select task", vec!["Continue", "Select"])
+                    // .with_help_message("")
+                    .with_vim_mode(true)
+                    .prompt()
+                    .unwrap();
+            }
+            match choice {
                 "Continue" => {}
                 "Select" => {
                     return Ok(task);
@@ -126,6 +146,14 @@ impl List {
     }
 
     pub fn complete_task(&mut self, task: Rc<RefCell<Task>>) -> Result<()> {
+        if !Confirm::new("Are you sure you'd like to complete this task?")
+            .with_default(false)
+            .prompt()
+            .unwrap()
+        {
+            println!("Skipping");
+            return Ok(());
+        }
         task.borrow_mut().complete()?;
         self.remove_task(task).unwrap();
         Ok(())

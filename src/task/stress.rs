@@ -17,7 +17,7 @@ impl Task {
     fn crunch_stress(&self) -> f32 {
         // This is the hard one...
         // The stress from a task due x hours from now is:
-        let hours = self.hours_til_due();
+        let hours = self.hours_til_due().max(0.0);
         let f =
             |x: f32| 22.5 * (-1.05 * x).exp() + 2.0 * (-0.05 * x).exp() + 0.5 * (-0.003 * x).exp();
         return f(hours);
@@ -29,16 +29,16 @@ impl Task {
     }
 
     pub fn stress(&self) -> f32 {
-        if let Some(max_stress) = self
+        let child_stress = self
             .subtasks
             .values()
             .cloned()
             .map(|x| x.borrow().stress())
             .max_by(|a, b| a.partial_cmp(b).unwrap())
-        {
-            return max_stress;
-        }
+            .unwrap_or(0.0);
+
         let hours = self.estimated_time.as_seconds_f32() / 3600.0;
-        return (self.base_stess() + self.value_stress()) / hours + self.crunch_stress();
+        let stress = (self.base_stess() + self.value_stress()) / hours + self.crunch_stress();
+        return stress.max(child_stress);
     }
 }

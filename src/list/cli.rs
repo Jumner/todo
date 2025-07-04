@@ -17,9 +17,10 @@ fn get_tasks<F: FnMut(Rc<RefCell<Task>>) -> bool>(
 ) -> Result<Vec<String>> {
     Ok(map
         .into_iter()
-        .sorted()
+        .sorted_by(|(_, task_a), (_, task_b)| task_b.cmp(task_a))
         .filter_map(|(name, task)| {
-            if filter(task) {
+            if filter(task.clone()) {
+                // return Some(format!("{} ({:.2})", name, task.borrow().stress()));
                 return Some(name);
             }
             None
@@ -116,7 +117,13 @@ impl List {
             }
             root = Select::new(
                 "Select a Task",
-                task.borrow().subtasks.keys().cloned().collect(),
+                task.borrow()
+                    .subtasks
+                    .iter()
+                    .sorted_by(|(_, task_a), (_, task_b)| task_b.cmp(task_a))
+                    .map(|(name, _)| name)
+                    .cloned()
+                    .collect(),
             )
             // .with_help_message("")
             .with_vim_mode(true)

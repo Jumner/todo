@@ -102,6 +102,7 @@ impl std::fmt::Display for Task {
         writeln!(f, "Estimated Hours: {}", self.estimated_time.num_hours()).unwrap();
         writeln!(f, "Estimated Value: {}", self.estimated_value).unwrap();
         writeln!(f, "Deadline: {:?}", self.deadline).unwrap();
+        writeln!(f, "Stress: {:.2}", self.stress()).unwrap();
         for subtask in self.subtasks.keys() {
             writeln!(f, "Subtask: {}", subtask).unwrap();
         }

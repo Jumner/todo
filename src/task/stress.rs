@@ -1,3 +1,5 @@
+use chrono::Local;
+
 use super::Task;
 
 impl Task {
@@ -6,11 +8,19 @@ impl Task {
         return 0.5; // Hr/Days (I'm calling it a Schuette)
     }
 
+    fn hours_til_due(&self) -> f32 {
+        let now = Local::now().naive_local();
+        let time_til_due = self.deadline.signed_duration_since(now);
+        return time_til_due.as_seconds_f32() / 3600.0;
+    }
+
     fn crunch_stress(&self) -> f32 {
         // This is the hard one...
         // The stress from a task due x hours from now is:
-        // 22.5e^{-1.05x}+2e^{-0.05x}+0.5e^{-0.003x} Schuettes
-        0.0
+        let hours = self.hours_til_due();
+        let f =
+            |x: f32| 22.5 * (-1.05 * x).exp() + 2.0 * (-0.05 * x).exp() + 0.5 * (-0.003 * x).exp();
+        return f(hours);
     }
 
     fn value_stress(&self) -> f32 {
@@ -20,6 +30,6 @@ impl Task {
 
     pub fn stress(&self) -> f32 {
         let hours = self.estimated_time.as_seconds_f32() / 3600.0;
-        return (self.base_stess() + self.crunch_stress() + self.value_stress()) / hours;
+        return (self.base_stess() + self.value_stress()) / hours + self.crunch_stress();
     }
 }

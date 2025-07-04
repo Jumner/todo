@@ -128,11 +128,11 @@ impl std::cmp::PartialOrd for Task {
 
 impl std::cmp::Ord for Task {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        let cost = self.stress();
-        let other_cost = other.stress();
-        if cost > other_cost {
+        let stress = self.stress();
+        let other_stress = other.stress();
+        if stress > other_stress {
             return std::cmp::Ordering::Greater;
-        } else if cost < other_cost {
+        } else if stress < other_stress {
             return std::cmp::Ordering::Less;
         } else {
             return std::cmp::Ordering::Equal;

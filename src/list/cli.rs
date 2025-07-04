@@ -7,6 +7,7 @@ use std::{
 use crate::task::{Task, cli::update_task};
 use anyhow::Result;
 use inquire::{Confirm, MultiSelect, Select};
+use itertools::Itertools;
 
 use super::List;
 
@@ -16,6 +17,7 @@ fn get_tasks<F: FnMut(Rc<RefCell<Task>>) -> bool>(
 ) -> Result<Vec<String>> {
     Ok(map
         .into_iter()
+        .sorted()
         .filter_map(|(name, task)| {
             if filter(task) {
                 return Some(name);
@@ -58,7 +60,6 @@ impl List {
         let task = self
             .pick_task_list(|task: Rc<RefCell<Task>>| task.borrow().subtasks.len() == 0)
             .unwrap();
-        // TODO sort
         Ok(task)
     }
 

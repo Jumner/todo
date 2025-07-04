@@ -8,6 +8,7 @@ use crate::{
 };
 
 pub fn main_menu(list: &mut List) {
+    println!("Overall Stress {:.2}", list.stress());
     match Select::new(
         "Select Action",
         vec![

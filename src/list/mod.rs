@@ -1,5 +1,6 @@
 use std::{cell::RefCell, collections::HashMap, rc::Rc, time::Duration};
 pub mod cli;
+mod stress;
 
 use crate::task::Task;
 use anyhow::Result;

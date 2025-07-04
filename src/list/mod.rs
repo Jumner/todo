@@ -26,8 +26,8 @@ impl List {
         task.borrow_mut().initialize(self.id_counter).unwrap();
         self.id_counter += 1;
         self.tasks.insert(task.borrow().name.clone(), task.clone());
-        self.update_subtasks(task.clone());
         self.update_supertasks(task.clone());
+        self.update_subtasks(task.clone());
         return Ok(());
     }
 

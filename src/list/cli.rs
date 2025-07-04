@@ -138,10 +138,10 @@ impl List {
 
     pub fn modify_task(&mut self, task: Rc<RefCell<Task>>) -> Result<()> {
         update_task(task.clone()).unwrap();
-        // Set subtasks
-        self.update_subtasks(task.clone());
-        // Assign Parent
+        // Assign Parents
         self.update_supertasks(task.clone());
+        // Assign subtasks
+        self.update_subtasks(task.clone());
         Ok(())
     }
 

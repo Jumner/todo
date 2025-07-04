@@ -6,6 +6,7 @@ use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 pub mod cli;
 mod status;
+mod stress;
 pub use status::Status;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -75,10 +76,6 @@ impl Task {
         self.subtasks.keys().cloned().collect()
     }
 
-    pub fn cost(&self) -> f32 {
-        return self.estimated_time.as_seconds_f32();
-    }
-
     pub fn complete(&mut self) -> Result<()> {
         for task in self.subtasks.values().cloned() {
             match task.borrow().status {
@@ -119,7 +116,7 @@ impl std::cmp::Eq for Task {}
 
 impl std::cmp::PartialEq for Task {
     fn eq(&self, other: &Self) -> bool {
-        self.cost() == other.cost()
+        self.stress() == other.stress()
     }
 }
 
@@ -131,8 +128,8 @@ impl std::cmp::PartialOrd for Task {
 
 impl std::cmp::Ord for Task {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        let cost = self.cost();
-        let other_cost = other.cost();
+        let cost = self.stress();
+        let other_cost = other.stress();
         if cost > other_cost {
             return std::cmp::Ordering::Greater;
         } else if cost < other_cost {

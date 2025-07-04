@@ -29,6 +29,15 @@ impl Task {
     }
 
     pub fn stress(&self) -> f32 {
+        if let Some(max_stress) = self
+            .subtasks
+            .values()
+            .cloned()
+            .map(|x| x.borrow().stress())
+            .max_by(|a, b| a.partial_cmp(b).unwrap())
+        {
+            return max_stress;
+        }
         let hours = self.estimated_time.as_seconds_f32() / 3600.0;
         return (self.base_stess() + self.value_stress()) / hours + self.crunch_stress();
     }

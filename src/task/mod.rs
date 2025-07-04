@@ -11,7 +11,7 @@ pub use status::Status;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Task {
-    pub id: Option<usize>,
+    pub id: usize,
     pub name: String,
     description: String,
     status: Status,
@@ -31,7 +31,7 @@ impl Task {
         deadline: NaiveDateTime,
     ) -> Self {
         return Task {
-            id: None,
+            id: 0,
             name,
             description,
             status: Status::INVALID,
@@ -44,10 +44,7 @@ impl Task {
     }
 
     pub fn initialize(&mut self, id: usize) -> Result<()> {
-        if let Some(id) = self.id {
-            return Err(anyhow!("ID is already initialized ({})", id));
-        }
-        self.id = Some(id);
+        self.id = id;
         match self.status {
             Status::INVALID => self.status = Status::INCOMPLETE,
             status => return Err(anyhow!("Status is not invalid ({})", status)),

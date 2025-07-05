@@ -13,23 +13,25 @@ impl List {
         &self,
         tasks: Vec<usize>,
         mut filter: F,
-    ) -> HashMap<String, usize> {
+    ) -> Vec<(String, usize, f32)> {
         tasks
             .into_iter()
-            .sorted_by(|&a, &b| self.stress(b).partial_cmp(&self.stress(a)).unwrap())
             .filter_map(|id| {
                 if filter(self.tasks.get(&id).unwrap()) {
+                    let stress = self.stress(id);
                     return Some((
                         format!(
                             "{} ({:.2})",
                             self.tasks.get(&id).unwrap().name.clone(),
-                            self.stress(id)
+                            stress
                         ),
                         id,
+                        stress,
                     ));
                 }
                 None
             })
+            .sorted_by(|(_, _, a), (_, _, b)| b.partial_cmp(a).unwrap())
             .collect()
     }
 
@@ -53,12 +55,24 @@ impl List {
 
     fn pick_task_list<F: FnMut(&Task) -> bool>(&self, filter: F) -> usize {
         let name_to_id = self.get_tasks(self.tasks.keys().cloned().collect(), filter);
-        let task = Select::new("Select a Task", name_to_id.keys().cloned().collect())
-            // .with_help_message("")
-            .with_vim_mode(true)
-            .prompt()
-            .unwrap();
-        return *name_to_id.get(&task).unwrap();
+        let task = Select::new(
+            "Select a Task",
+            name_to_id
+                .iter()
+                .map(|(name, _, _)| name)
+                .cloned()
+                .collect(),
+        )
+        // .with_help_message("")
+        .with_vim_mode(true)
+        .prompt()
+        .unwrap();
+
+        let map: HashMap<String, usize> = name_to_id
+            .iter()
+            .map(|(name, id, _)| (name.clone(), *id))
+            .collect();
+        return *map.get(&task).unwrap();
     }
 
     fn pick_task_tree<F: FnMut(&Task) -> bool>(&self, mut select_filter: F) -> usize {
@@ -67,12 +81,23 @@ impl List {
             Box::new(|task: &Task| -> bool { task.supertasks.is_empty() });
         loop {
             let name_to_id = self.get_tasks(valid_ids, filter);
-            let name = Select::new("Select a Task", name_to_id.keys().cloned().collect())
-                // .with_help_message("")
-                .with_vim_mode(true)
-                .prompt()
-                .unwrap();
-            let id = *name_to_id.get(&name).unwrap();
+            let name = Select::new(
+                "Select a Task",
+                name_to_id
+                    .iter()
+                    .map(|(name, _, _)| name)
+                    .cloned()
+                    .collect(),
+            )
+            // .with_help_message("")
+            .with_vim_mode(true)
+            .prompt()
+            .unwrap();
+            let map: HashMap<String, usize> = name_to_id
+                .iter()
+                .map(|(name, id, _)| (name.clone(), *id))
+                .collect();
+            let id = *map.get(&name).unwrap();
             let task = self.tasks.get(&id).unwrap();
             if task.subtasks.len() == 0 {
                 return id;
@@ -141,24 +166,34 @@ impl List {
         let current_subtasks: Vec<usize> = task_to_id
             .iter()
             .enumerate()
-            .filter_map(|(i, (_, other))| {
-                if self.tasks.get(&id).unwrap().subtasks.contains(other) {
+            .filter_map(|(i, (_, other, _))| {
+                if self.tasks.get(&id).unwrap().subtasks.contains(&other) {
                     return Some(i);
                 }
                 None
             })
             .collect();
-        let selected_subtasks =
-            MultiSelect::new("Select subtasks", task_to_id.keys().cloned().collect())
-                // .with_help_message("")
-                .with_vim_mode(true)
-                .with_default(&current_subtasks)
-                .with_help_message("Select subtasks")
-                .prompt();
+        let selected_subtasks = MultiSelect::new(
+            "Select subtasks",
+            task_to_id
+                .iter()
+                .map(|(name, _, _)| name)
+                .cloned()
+                .collect(),
+        )
+        // .with_help_message("")
+        .with_vim_mode(true)
+        .with_default(&current_subtasks)
+        .with_help_message("Select subtasks")
+        .prompt();
+        let map: HashMap<String, usize> = task_to_id
+            .iter()
+            .map(|(name, id, _)| (name.clone(), *id))
+            .collect();
         let selected_subtasks: Vec<usize> = if let Ok(selected_subtasks) = selected_subtasks {
             selected_subtasks
                 .iter()
-                .map(|name| *task_to_id.get(name).unwrap())
+                .map(|name| *map.get(name).unwrap())
                 .collect()
         } else {
             return;
@@ -192,24 +227,34 @@ impl List {
         let current_supertasks: Vec<usize> = task_to_id
             .iter()
             .enumerate()
-            .filter_map(|(i, (_, other))| {
-                if self.tasks.get(&id).unwrap().supertasks.contains(other) {
+            .filter_map(|(i, (_, other, _))| {
+                if self.tasks.get(&id).unwrap().supertasks.contains(&other) {
                     return Some(i);
                 }
                 None
             })
             .collect();
-        let selected_supertasks =
-            MultiSelect::new("Select supertasks", task_to_id.keys().cloned().collect())
-                // .with_help_message("")
-                .with_vim_mode(true)
-                .with_default(&current_supertasks)
-                .with_help_message("Select supertasks")
-                .prompt();
+        let selected_supertasks = MultiSelect::new(
+            "Select supertasks",
+            task_to_id
+                .iter()
+                .map(|(name, _, _)| name)
+                .cloned()
+                .collect(),
+        )
+        // .with_help_message("")
+        .with_vim_mode(true)
+        .with_default(&current_supertasks)
+        .with_help_message("Select supertasks")
+        .prompt();
+        let map: HashMap<String, usize> = task_to_id
+            .iter()
+            .map(|(name, id, _)| (name.clone(), *id))
+            .collect();
         let selected_supertasks: Vec<usize> = if let Ok(selected_supertasks) = selected_supertasks {
             selected_supertasks
                 .iter()
-                .map(|name| *task_to_id.get(name).unwrap())
+                .map(|name| *map.get(name).unwrap())
                 .collect()
         } else {
             return;

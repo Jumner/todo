@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Deserialize)]
 pub struct List {
     time: Vec<Duration>,
-    tasks: HashMap<String, Rc<RefCell<Task>>>,
+    tasks: HashMap<usize, Rc<RefCell<Task>>>,
     id_counter: usize,
 }
 
@@ -26,17 +26,17 @@ impl List {
     pub fn add_task(&mut self, task: Rc<RefCell<Task>>) -> Result<()> {
         task.borrow_mut().initialize(self.id_counter).unwrap();
         self.id_counter += 1;
-        self.tasks.insert(task.borrow().name.clone(), task.clone());
+        self.tasks.insert(task.borrow().id, task.clone());
         self.update_supertasks(task.clone());
         self.update_subtasks(task.clone());
         return Ok(());
     }
 
     pub fn remove_task(&mut self, task: Rc<RefCell<Task>>) -> Result<()> {
-        self.tasks.remove(&task.borrow().name);
+        self.tasks.remove(&task.borrow().id);
         // Break subtasks
         for subtask in task.borrow().subtasks.values().cloned() {
-            subtask.borrow_mut().supertasks.remove(&task.borrow().name);
+            subtask.borrow_mut().supertasks.remove(&task.borrow().id);
         }
         // Break supertasks
         for supertask in task.borrow().supertasks.iter() {
@@ -46,7 +46,7 @@ impl List {
                 .unwrap()
                 .borrow_mut()
                 .subtasks
-                .remove(&task.borrow().name);
+                .remove(&task.borrow().id);
         }
         return Ok(());
     }

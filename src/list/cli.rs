@@ -12,16 +12,22 @@ use itertools::Itertools;
 use super::List;
 
 fn get_tasks<F: FnMut(Rc<RefCell<Task>>) -> bool>(
-    map: HashMap<String, Rc<RefCell<Task>>>,
+    map: HashMap<usize, Rc<RefCell<Task>>>,
     mut filter: F,
-) -> Result<Vec<String>> {
+) -> Result<HashMap<String, usize>> {
     Ok(map
         .into_iter()
         .sorted_by(|(_, task_a), (_, task_b)| task_b.cmp(task_a))
         .filter_map(|(name, task)| {
             if filter(task.clone()) {
-                // return Some(format!("{} ({:.2})", name, task.borrow().stress()));
-                return Some(name);
+                return Some((
+                    format!(
+                        "{} ({:.2})",
+                        task.borrow().name.clone(),
+                        task.borrow().stress()
+                    ),
+                    name,
+                ));
             }
             None
         })
@@ -29,10 +35,10 @@ fn get_tasks<F: FnMut(Rc<RefCell<Task>>) -> bool>(
 }
 
 impl List {
-    fn get_name_map(&self) -> HashMap<String, Rc<RefCell<Task>>> {
+    fn get_name_map(&self) -> HashMap<usize, Rc<RefCell<Task>>> {
         let mut map = HashMap::new();
         for item in self.tasks.values().cloned() {
-            map.insert(item.borrow().name.clone(), item.clone());
+            map.insert(item.borrow().id, item.clone());
         }
         return map;
     }
@@ -69,12 +75,13 @@ impl List {
         filter: F,
     ) -> Result<Rc<RefCell<Task>>> {
         let map = self.get_name_map();
-        let task = Select::new("Select a Task", get_tasks(map.clone(), filter).unwrap())
+        let options = get_tasks(map.clone(), filter).unwrap();
+        let task = Select::new("Select a Task", options.keys().cloned().collect())
             // .with_help_message("")
             .with_vim_mode(true)
             .prompt()
             .unwrap();
-        return Ok(map.get(&task).unwrap().clone());
+        return Ok(map.get(options.get(&task).unwrap()).unwrap().clone());
     }
 
     fn pick_task_tree<F: FnMut(Rc<RefCell<Task>>) -> bool>(
@@ -82,21 +89,22 @@ impl List {
         mut filter: F,
     ) -> Result<Rc<RefCell<Task>>> {
         let map = self.get_name_map();
-        let mut root = Select::new(
-            "Select a Task",
-            get_tasks(map.clone(), |task| task.borrow().supertasks.is_empty()).unwrap(),
-        )
-        // .with_help_message("")
-        .with_vim_mode(true)
-        .prompt();
-        let mut task = map.get(root.as_ref().unwrap()).unwrap().clone();
+        let options = get_tasks(map.clone(), |task| task.borrow().supertasks.is_empty()).unwrap();
+        let mut root = Select::new("Select a Task", options.keys().cloned().collect())
+            // .with_help_message("")
+            .with_vim_mode(true)
+            .prompt();
+        let mut task = map
+            .get(options.get(root.as_ref().unwrap()).unwrap())
+            .unwrap()
+            .clone();
         loop {
             let name = if let Ok(name) = root {
                 name
             } else {
                 return Ok(task);
             };
-            task = map.get(&name).unwrap().clone();
+            task = map.get(options.get(&name).unwrap()).unwrap().clone();
             if task.borrow().subtasks.len() == 0 {
                 return Ok(task);
             }
@@ -121,8 +129,13 @@ impl List {
                     .subtasks
                     .iter()
                     .sorted_by(|(_, task_a), (_, task_b)| task_b.cmp(task_a))
-                    .map(|(name, _)| name)
-                    .cloned()
+                    .map(|(_, task)| {
+                        format!(
+                            "{} ({:.2})",
+                            task.borrow().name.clone(),
+                            task.borrow().stress()
+                        )
+                    })
                     .collect(),
             )
             // .with_help_message("")
@@ -133,14 +146,15 @@ impl List {
 
     pub fn pick_tasks(&self) -> Result<Vec<Rc<RefCell<Task>>>> {
         let map = self.get_name_map();
-        let tasks = MultiSelect::new("Select Tasks", get_tasks(map.clone(), |_| true).unwrap())
+        let options = get_tasks(map.clone(), |_| true).unwrap();
+        let tasks = MultiSelect::new("Select Tasks", options.keys().collect())
             // .with_help_message("")
             .with_vim_mode(true)
             .prompt()
             .unwrap();
         return Ok(tasks
             .into_iter()
-            .map(|task| map.get(&task).unwrap().clone())
+            .map(|task| map.get(options.get(task).unwrap()).unwrap().clone())
             .collect());
     }
 
@@ -170,7 +184,7 @@ impl List {
     pub fn update_subtasks(&mut self, task: Rc<RefCell<Task>>) {
         // get list of parents
         let mut parents = HashSet::new();
-        let mut stack = vec![task.borrow().name.clone()];
+        let mut stack = vec![task.borrow().id];
         while let Some(parent) = stack.pop() {
             for supertask in self.tasks.get(&parent).unwrap().borrow().supertasks.iter() {
                 stack.push(supertask.clone());
@@ -180,35 +194,51 @@ impl List {
         // Get list of tasks
         let map = self.get_name_map();
         let total_tasks = get_tasks(map.clone(), |other| {
-            other.borrow().name != task.borrow().name
-                && !parents.contains(&other.borrow().name.clone())
+            other.borrow().id != task.borrow().id && !parents.contains(&other.borrow().id)
         })
         .unwrap();
         let current_subtasks: Vec<usize> = total_tasks
             .iter()
             .enumerate()
-            .filter_map(|(i, other)| {
-                if task.borrow().subtasks.contains_key(other) {
+            .filter_map(|(i, (_, id))| {
+                if task.borrow().subtasks.contains_key(id) {
                     return Some(i);
                 }
                 None
             })
             .collect();
-        let selected_subtasks = MultiSelect::new("Select subtasks", total_tasks.clone())
-            // .with_help_message("")
-            .with_vim_mode(true)
-            .with_default(&current_subtasks)
-            .with_help_message("Select subtasks")
-            .prompt();
-        let selected_subtasks = if let Ok(selected_subtasks) = selected_subtasks {
+        let options: HashMap<String, usize> = total_tasks
+            .values()
+            .map(|id| {
+                let task = self.tasks.get(id).unwrap();
+                (
+                    format!(
+                        "{} ({:.2})",
+                        task.borrow().name.clone(),
+                        task.borrow().stress()
+                    ),
+                    task.borrow().id,
+                )
+            })
+            .collect();
+        let selected_subtasks =
+            MultiSelect::new("Select subtasks", options.keys().cloned().collect())
+                // .with_help_message("")
+                .with_vim_mode(true)
+                .with_default(&current_subtasks)
+                .with_help_message("Select subtasks")
+                .prompt();
+        let selected_subtasks: Vec<usize> = if let Ok(selected_subtasks) = selected_subtasks {
             selected_subtasks
+                .iter()
+                .map(|task| *options.get(task).unwrap())
+                .collect()
         } else {
             return;
         };
         current_subtasks.iter().for_each(|&subtask| {
-            if !selected_subtasks.contains(&total_tasks[subtask]) {
-                task.borrow_mut()
-                    .remove_subtask(total_tasks[subtask].clone());
+            if !selected_subtasks.contains(&subtask) {
+                task.borrow_mut().remove_subtask(subtask);
             }
         });
         selected_subtasks.iter().for_each(|other| {
@@ -222,7 +252,7 @@ impl List {
     pub fn update_supertasks(&mut self, task: Rc<RefCell<Task>>) {
         // get list of children
         let mut children = HashSet::new();
-        let mut stack = vec![task.borrow().name.clone()];
+        let mut stack = vec![task.borrow().id];
         while let Some(child) = stack.pop() {
             for subtask in self.tasks.get(&child).unwrap().borrow().subtasks.keys() {
                 stack.push(subtask.clone());
@@ -232,39 +262,41 @@ impl List {
         // Get list of tasks
         let map = self.get_name_map();
         let total_tasks = get_tasks(map.clone(), |other| {
-            other.borrow().name != task.borrow().name
-                && !children.contains(&other.borrow().name.clone())
+            other.borrow().id != task.borrow().id && !children.contains(&other.borrow().id)
         })
         .unwrap();
         let current_supertasks: Vec<usize> = total_tasks
             .iter()
             .enumerate()
-            .filter_map(|(i, other)| {
-                if task.borrow().supertasks.contains(other) {
+            .filter_map(|(i, (_, id))| {
+                if task.borrow().supertasks.contains(id) {
                     return Some(i);
                 }
                 None
             })
             .collect();
-        let selected_subtasks = MultiSelect::new("Select Supertasks", total_tasks.clone())
-            // .with_help_message("")
-            .with_vim_mode(true)
-            .with_default(&current_supertasks)
-            .with_help_message("Select supertasks")
-            .prompt();
-        let selected_supertasks = if let Ok(selected_supertasks) = selected_subtasks {
+        let selected_subtasks =
+            MultiSelect::new("Select Supertasks", total_tasks.keys().cloned().collect())
+                // .with_help_message("")
+                .with_vim_mode(true)
+                .with_default(&current_supertasks)
+                .with_help_message("Select supertasks")
+                .prompt();
+        let selected_supertasks: Vec<usize> = if let Ok(selected_supertasks) = selected_subtasks {
             selected_supertasks
+                .iter()
+                .map(|st| *total_tasks.get(st).unwrap())
+                .collect()
         } else {
             return;
         };
-        current_supertasks.iter().for_each(|&supertask| {
-            if !selected_supertasks.contains(&total_tasks[supertask]) {
-                let name = task.borrow().name.clone();
+        current_supertasks.iter().for_each(|supertask| {
+            if !selected_supertasks.contains(supertask) {
                 self.tasks
-                    .get(&total_tasks[supertask])
+                    .get(supertask)
                     .unwrap()
                     .borrow_mut()
-                    .remove_subtask(name);
+                    .remove_subtask(task.borrow().id);
             }
         });
         selected_supertasks.iter().for_each(|other| {

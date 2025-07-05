@@ -18,8 +18,8 @@ pub struct Task {
     estimated_time: TimeDelta,
     estimated_value: usize,
     deadline: NaiveDateTime,
-    pub subtasks: HashMap<String, Rc<RefCell<Task>>>,
-    pub supertasks: HashSet<String>,
+    pub subtasks: HashMap<usize, Rc<RefCell<Task>>>,
+    pub supertasks: HashSet<usize>,
 }
 
 impl Task {
@@ -53,24 +53,26 @@ impl Task {
     }
 
     pub fn add_subtask(&mut self, task: Rc<RefCell<Task>>) {
-        self.subtasks
-            .insert(task.borrow().name.clone(), task.clone());
-        task.borrow_mut().supertasks.insert(self.name.clone());
+        self.subtasks.insert(task.borrow().id, task.clone());
+        task.borrow_mut().supertasks.insert(self.id);
     }
 
-    pub fn remove_subtask(&mut self, name: String) {
+    pub fn remove_subtask(&mut self, id: usize) {
         self.subtasks
-            .get(&name)
+            .get(&id)
             .unwrap()
             .clone()
             .borrow_mut()
             .supertasks
-            .remove(&self.name);
-        self.subtasks.remove(&name);
+            .remove(&self.id);
+        self.subtasks.remove(&id);
     }
 
     pub fn get_subtasks(&self) -> Vec<String> {
-        self.subtasks.keys().cloned().collect()
+        self.subtasks
+            .values()
+            .map(|task| -> String { task.borrow().name.clone() })
+            .collect()
     }
 
     pub fn complete(&mut self) -> Result<()> {

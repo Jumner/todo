@@ -1,5 +1,5 @@
 use anyhow::Result;
-use chrono::{self, NaiveDate, NaiveTime, TimeDelta};
+use chrono::{self, NaiveDate, NaiveDateTime, NaiveTime, TimeDelta};
 use inquire::{CustomType, DateSelect, Text};
 
 use crate::task::Task;
@@ -9,15 +9,14 @@ pub fn create_task() -> Task {
     let description = get_description(None).unwrap();
     let estimated_time = get_estimated_time(None).unwrap();
 
-    let estimated_value = get_estimated_value(None).unwrap();
-    let date = get_date(None).unwrap();
-    let time = get_time(Some(NaiveTime::from_hms_opt(23, 59, 59).unwrap())).unwrap();
+    let estimated_value = get_estimated_value(None).ok();
+    let deadline = get_datetime(None).ok();
     return Task::new(
         name,
         description,
         TimeDelta::try_hours(estimated_time as i64).unwrap(),
         estimated_value,
-        date.and_time(time),
+        deadline,
     );
 }
 
@@ -28,15 +27,13 @@ impl Task {
         let estimated_time =
             get_estimated_time(Some(self.estimated_time.num_hours() as usize)).unwrap();
 
-        let estimated_value = get_estimated_value(Some(self.estimated_value)).unwrap();
-        let date = get_date(Some(self.deadline.date())).unwrap();
-        let time = get_time(Some(self.deadline.time())).unwrap();
-
+        let estimated_value = get_estimated_value(self.estimated_value).ok();
+        let deadline = get_datetime(self.deadline).ok();
         self.name = name;
         self.description = description;
         self.estimated_time = TimeDelta::try_hours(estimated_time as i64).unwrap();
         self.estimated_value = estimated_value;
-        self.deadline = date.and_time(time);
+        self.deadline = deadline;
     }
 }
 
@@ -48,7 +45,7 @@ fn get_time(default: Option<NaiveTime>) -> Result<NaiveTime> {
     if let Some(default) = default {
         time = time.with_default(default);
     }
-    let time = time.prompt().unwrap();
+    let time = time.prompt()?;
     return Ok(time);
 }
 
@@ -57,8 +54,20 @@ fn get_date(default: Option<NaiveDate>) -> Result<NaiveDate> {
     if let Some(default) = default {
         date = date.with_default(default);
     }
-    let date = date.prompt().unwrap();
+    let date = date.prompt()?;
     return Ok(date);
+}
+
+fn get_datetime(default: Option<NaiveDateTime>) -> Result<NaiveDateTime> {
+    let midnight = NaiveTime::from_hms_opt(23, 59, 59).unwrap();
+    let (default_date, default_time) = if let Some(default) = default {
+        (Some(default.date()), Some(default.time()))
+    } else {
+        (None, Some(midnight))
+    };
+    let date = get_date(default_date)?;
+    let time = get_time(default_time).unwrap_or(midnight);
+    return Ok(date.and_time(time));
 }
 
 fn get_estimated_value(default: Option<usize>) -> Result<usize> {
@@ -69,7 +78,7 @@ fn get_estimated_value(default: Option<usize>) -> Result<usize> {
     if let Some(default) = default {
         estimated_value = estimated_value.with_default(default);
     }
-    let estimated_value = estimated_value.prompt().unwrap();
+    let estimated_value = estimated_value.prompt()?;
     return Ok(estimated_value);
 }
 

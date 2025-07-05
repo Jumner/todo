@@ -227,6 +227,7 @@ impl List {
         };
         current_subtasks.iter().for_each(|&subtask| {
             if !selected_subtasks.contains(&subtask) {
+                dbg!("first call, {:?} {:?}", task.clone(), subtask);
                 task.borrow_mut().remove_subtask(subtask);
             }
         });
@@ -279,8 +280,11 @@ impl List {
         } else {
             return;
         };
-        current_supertasks.iter().for_each(|supertask| {
+        dbg!(selected_supertasks.clone());
+        task.borrow().supertasks.iter().for_each(|supertask| {
+            dbg!(supertask);
             if !selected_supertasks.contains(supertask) {
+                dbg!("second call, {:?} {:?}", task.clone(), supertask);
                 self.tasks
                     .get(supertask)
                     .unwrap()

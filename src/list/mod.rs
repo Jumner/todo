@@ -1,74 +1,67 @@
-use std::{cell::RefCell, collections::HashMap, rc::Rc, time::Duration};
+use std::collections::HashMap;
 pub mod cli;
 mod stress;
 
 use crate::task::Task;
-use anyhow::Result;
-use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct List {
-    time: Vec<Duration>,
-    tasks: HashMap<usize, Rc<RefCell<Task>>>,
+    pub tasks: HashMap<usize, Task>,
     id_counter: usize,
 }
 
 impl List {
-    pub fn new(time: Vec<Duration>) -> Self {
+    pub fn new() -> Self {
         List {
-            time,
             tasks: HashMap::new(),
             id_counter: 0,
         }
     }
 
-    pub fn add_task(&mut self, task: Rc<RefCell<Task>>) -> Result<()> {
-        task.borrow_mut().initialize(self.id_counter).unwrap();
+    pub fn add_task(&mut self, mut task: Task) {
+        task.initialize(self.id_counter).unwrap();
         self.id_counter += 1;
-        self.tasks.insert(task.borrow().id, task.clone());
-        self.update_supertasks(task.clone());
-        self.update_subtasks(task.clone());
-        return Ok(());
+        let id = task.id;
+        self.tasks.insert(id, task);
+        self.update_supertasks(id);
+        self.update_subtasks(id);
     }
 
-    pub fn remove_task(&mut self, task: Rc<RefCell<Task>>) -> Result<()> {
-        self.tasks.remove(&task.borrow().id);
-        // Break subtasks
-        for subtask in task.borrow().subtasks.values().cloned() {
-            subtask.borrow_mut().supertasks.remove(&task.borrow().id);
+    pub fn remove_task(&mut self, id: usize) {
+        let task = self.tasks.remove(&id).unwrap();
+        for subtask in task.subtasks.iter() {
+            self.tasks.get_mut(subtask).unwrap().supertasks.remove(&id);
         }
-        // Break supertasks
-        for supertask in task.borrow().supertasks.iter() {
-            self.tasks
-                .get(supertask)
-                .cloned()
-                .unwrap()
-                .borrow_mut()
-                .subtasks
-                .remove(&task.borrow().id);
+        for supertask in task.supertasks.iter() {
+            self.tasks.get_mut(supertask).unwrap().subtasks.remove(&id);
         }
-        return Ok(());
     }
 
-    pub fn sort(&mut self) {
-        println!(
-            "{:?}",
-            self.tasks
-                .values()
-                .cloned()
-                .sorted()
-                .collect::<Vec<Rc<RefCell<Task>>>>()
-        );
+    pub fn add_subtask(&mut self, id: usize, subtask: usize) {
+        self.tasks.get_mut(&id).unwrap().subtasks.insert(subtask);
+        self.tasks.get_mut(&subtask).unwrap().supertasks.insert(id);
+    }
+
+    pub fn remove_subtask(&mut self, id: usize, subtask: usize) {
+        self.tasks.get_mut(&id).unwrap().subtasks.remove(&subtask);
+        self.tasks.get_mut(&subtask).unwrap().supertasks.remove(&id);
+    }
+
+    pub fn add_supertask(&mut self, id: usize, supertask: usize) {
+        self.add_subtask(supertask, id);
+    }
+
+    pub fn remove_supertask(&mut self, id: usize, supertask: usize) {
+        self.remove_subtask(supertask, id);
     }
 }
 
 impl std::fmt::Display for List {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "{:?}", self.time).unwrap();
         writeln!(f, "Tasks:").unwrap();
-        for task in self.tasks.values().cloned() {
-            write!(f, "{}", task.borrow()).unwrap();
+        for task in self.tasks.values() {
+            write!(f, "{}", task).unwrap();
         }
         write!(f, "")
     }

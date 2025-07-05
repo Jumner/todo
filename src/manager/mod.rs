@@ -3,7 +3,6 @@ use dirs::config_dir;
 use std::fs::{File, create_dir_all};
 use std::io::{Read, Write};
 use std::path::PathBuf;
-use std::time::Duration;
 
 use cli::main_menu;
 
@@ -46,7 +45,7 @@ pub fn load() -> Option<List> {
 }
 
 pub fn spin() {
-    let mut list = load().unwrap_or(List::new(vec![Duration::from_secs(10)]));
+    let mut list = load().unwrap_or(List::new());
     loop {
         main_menu(&mut list);
         save(&list);

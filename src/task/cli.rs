@@ -1,5 +1,3 @@
-use std::{cell::RefCell, rc::Rc};
-
 use anyhow::Result;
 use chrono::{self, NaiveDate, NaiveTime, TimeDelta};
 use inquire::{CustomType, DateSelect, Text};
@@ -21,6 +19,25 @@ pub fn create_task() -> Task {
         estimated_value,
         date.and_time(time),
     );
+}
+
+impl Task {
+    pub fn update_task(&mut self) {
+        let name = get_name(Some(self.name.clone())).unwrap();
+        let description = get_description(Some(self.description.clone())).unwrap();
+        let estimated_time =
+            get_estimated_time(Some(self.estimated_time.num_hours() as usize)).unwrap();
+
+        let estimated_value = get_estimated_value(Some(self.estimated_value)).unwrap();
+        let date = get_date(Some(self.deadline.date())).unwrap();
+        let time = get_time(Some(self.deadline.time())).unwrap();
+
+        self.name = name;
+        self.description = description;
+        self.estimated_time = TimeDelta::try_hours(estimated_time as i64).unwrap();
+        self.estimated_value = estimated_value;
+        self.deadline = date.and_time(time);
+    }
 }
 
 fn get_time(default: Option<NaiveTime>) -> Result<NaiveTime> {
@@ -84,23 +101,4 @@ fn get_description(default: Option<String>) -> Result<String> {
     }
     let description = description.prompt().unwrap();
     return Ok(description);
-}
-
-pub fn update_task(task: Rc<RefCell<Task>>) -> Result<()> {
-    let mut task = task.borrow_mut();
-    let name = get_name(Some(task.name.clone())).unwrap();
-    let description = get_description(Some(task.description.clone())).unwrap();
-    let estimated_time =
-        get_estimated_time(Some(task.estimated_time.num_hours() as usize)).unwrap();
-
-    let estimated_value = get_estimated_value(Some(task.estimated_value)).unwrap();
-    let date = get_date(Some(task.deadline.date())).unwrap();
-    let time = get_time(Some(task.deadline.time())).unwrap();
-
-    task.name = name;
-    task.description = description;
-    task.estimated_time = TimeDelta::try_hours(estimated_time as i64).unwrap();
-    task.estimated_value = estimated_value;
-    task.deadline = date.and_time(time);
-    Ok(())
 }

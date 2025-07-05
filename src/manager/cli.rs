@@ -25,7 +25,7 @@ pub fn main_menu(list: &mut List) {
             list.modify_task(task);
         }
         "Complete Task" => {
-            let task = list.pick_task(|task: &Task| task.subtasks.len() == 0);
+            let task = list.pick_task(|task: &Task| task.started() && task.subtasks.len() == 0);
             if list.complete_task(task).is_err() {
                 println!("Dependency not completed");
             }

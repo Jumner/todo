@@ -3,23 +3,12 @@ use std::collections::{HashMap, HashSet};
 use crate::task::Task;
 use anyhow::Result;
 use anyhow::anyhow;
-use chrono::Local;
 use inquire::{Confirm, MultiSelect, Select};
 use itertools::Itertools;
 
 use super::List;
 
 impl List {
-    fn started(&self, id: usize) -> bool {
-        let now = Local::now().naive_local();
-        let start = if let Some(start) = self.tasks.get(&id).unwrap().start {
-            start
-        } else {
-            return true;
-        };
-        return now.signed_duration_since(start).as_seconds_f32() > 0.0;
-    }
-
     fn get_tasks<F: FnMut(&Task) -> bool>(
         &self,
         tasks: Vec<usize>,

@@ -10,8 +10,8 @@ pub fn create_task() -> Task {
     let estimated_time = get_estimated_time(None).unwrap();
 
     let estimated_value = get_estimated_value(None).ok();
-    let start = get_datetime(None).ok();
-    let deadline = get_datetime(None).ok();
+    let start = get_datetime(None, true).ok();
+    let deadline = get_datetime(None, false).ok();
     return Task::new(
         name,
         description,
@@ -30,8 +30,8 @@ impl Task {
             get_estimated_time(Some(self.estimated_time.num_hours() as usize)).unwrap();
 
         let estimated_value = get_estimated_value(self.estimated_value).ok();
-        let start = get_datetime(self.start).ok();
-        let deadline = get_datetime(self.deadline).ok();
+        let start = get_datetime(self.start, true).ok();
+        let deadline = get_datetime(self.deadline, false).ok();
         self.name = name;
         self.description = description;
         self.estimated_time = TimeDelta::try_hours(estimated_time as i64).unwrap();
@@ -41,10 +41,14 @@ impl Task {
     }
 }
 
-fn get_time(default: Option<NaiveTime>) -> Result<NaiveTime> {
-    let mut time = CustomType::new("Select the time the task is due")
+fn get_time(
+    default: Option<NaiveTime>,
+    message: String,
+    help_message: String,
+) -> Result<NaiveTime> {
+    let mut time = CustomType::new(message.as_str())
         .with_parser(&|i| NaiveTime::parse_from_str(i, "%H:%M:%S").map_err(|_e| ()))
-        .with_help_message("Enter the due time")
+        .with_help_message(help_message.as_str())
         .with_error_message("WRONG");
     if let Some(default) = default {
         time = time.with_default(default);
@@ -53,8 +57,8 @@ fn get_time(default: Option<NaiveTime>) -> Result<NaiveTime> {
     return Ok(time);
 }
 
-fn get_date(default: Option<NaiveDate>) -> Result<NaiveDate> {
-    let mut date = DateSelect::new("Select the due date of the task");
+fn get_date(default: Option<NaiveDate>, message: String) -> Result<NaiveDate> {
+    let mut date = DateSelect::new(message.as_str());
     if let Some(default) = default {
         date = date.with_default(default);
     }
@@ -62,15 +66,30 @@ fn get_date(default: Option<NaiveDate>) -> Result<NaiveDate> {
     return Ok(date);
 }
 
-fn get_datetime(default: Option<NaiveDateTime>) -> Result<NaiveDateTime> {
-    let midnight = NaiveTime::from_hms_opt(23, 59, 59).unwrap();
+fn get_datetime(default: Option<NaiveDateTime>, start: bool) -> Result<NaiveDateTime> {
+    let (guess_time, date_message, time_message, time_help_message) = if start {
+        (
+            NaiveTime::from_hms_opt(0, 0, 0).unwrap(),
+            String::from("Select the start date of the task"),
+            String::from("Select the time the task starts"),
+            String::from("Enter the start time"),
+        )
+    } else {
+        (
+            NaiveTime::from_hms_opt(23, 59, 59).unwrap(),
+            String::from("Select the due date of the task"),
+            String::from("Select the time the task is due"),
+            String::from("Enter the due time"),
+        )
+    };
     let (default_date, default_time) = if let Some(default) = default {
         (Some(default.date()), Some(default.time()))
     } else {
-        (None, Some(midnight))
+        (None, Some(guess_time))
     };
-    let date = get_date(default_date)?;
-    let time = get_time(default_time).unwrap_or(midnight);
+
+    let date = get_date(default_date, date_message)?;
+    let time = get_time(default_time, time_message, time_help_message).unwrap_or(guess_time);
     return Ok(date.and_time(time));
 }
 

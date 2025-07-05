@@ -1,5 +1,5 @@
 use anyhow::Result;
-use chrono::{NaiveDateTime, TimeDelta};
+use chrono::{Local, NaiveDateTime, TimeDelta};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 
@@ -13,7 +13,7 @@ pub struct Task {
     description: String,
     estimated_time: TimeDelta,
     estimated_value: Option<usize>,
-    pub start: Option<NaiveDateTime>,
+    start: Option<NaiveDateTime>,
     deadline: Option<NaiveDateTime>,
     pub subtasks: HashSet<usize>,
     pub supertasks: HashSet<usize>,
@@ -45,6 +45,15 @@ impl Task {
         self.id = id;
         return Ok(());
     }
+    pub fn started(&self) -> bool {
+        let now = Local::now().naive_local();
+        let start = if let Some(start) = self.start {
+            start
+        } else {
+            return true;
+        };
+        return now.signed_duration_since(start).as_seconds_f32() > 0.0;
+    }
 }
 
 impl std::fmt::Display for Task {
@@ -55,6 +64,9 @@ impl std::fmt::Display for Task {
         writeln!(f, "Estimated Hours: {}", self.estimated_time.num_hours()).unwrap();
         if let Some(value) = self.estimated_value {
             writeln!(f, "Estimated Value: {}", value).unwrap();
+        }
+        if let Some(start) = self.start {
+            writeln!(f, "Start: {:?}", start).unwrap();
         }
         if let Some(deadline) = self.deadline {
             writeln!(f, "Deadline: {:?}", deadline).unwrap();

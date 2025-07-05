@@ -151,7 +151,7 @@ impl List {
 
     pub fn update_subtasks(&mut self, id: usize) {
         // get list of parents
-        let mut parents = HashSet::new();
+        let mut parents = HashSet::from([id]);
         let mut stack = vec![id];
         while let Some(parent) = stack.pop() {
             for &supertask in self.tasks.get(&parent).unwrap().supertasks.iter() {
@@ -198,7 +198,15 @@ impl List {
         } else {
             return;
         };
-        current_subtasks.iter().for_each(|subtask| {
+        let current_subtask_ids: Vec<usize> = self
+            .tasks
+            .get(&id)
+            .unwrap()
+            .subtasks
+            .iter()
+            .cloned()
+            .collect();
+        current_subtask_ids.iter().for_each(|subtask| {
             if !selected_subtasks.contains(subtask) {
                 self.remove_subtask(id, *subtask);
             }
@@ -212,7 +220,7 @@ impl List {
 
     pub fn update_supertasks(&mut self, id: usize) {
         // get list of children
-        let mut children = HashSet::new();
+        let mut children = HashSet::from([id]);
         let mut stack = vec![id];
         while let Some(child) = stack.pop() {
             for &subtask in self.tasks.get(&child).unwrap().subtasks.iter() {
@@ -259,7 +267,15 @@ impl List {
         } else {
             return;
         };
-        current_supertasks.iter().for_each(|supertask| {
+        let current_supertask_ids: Vec<usize> = self
+            .tasks
+            .get(&id)
+            .unwrap()
+            .supertasks
+            .iter()
+            .cloned()
+            .collect();
+        current_supertask_ids.iter().for_each(|supertask| {
             if !selected_supertasks.contains(supertask) {
                 self.remove_supertask(id, *supertask);
             }

@@ -89,7 +89,8 @@ impl List {
         mut filter: F,
     ) -> Result<Rc<RefCell<Task>>> {
         let map = self.get_name_map();
-        let options = get_tasks(map.clone(), |task| task.borrow().supertasks.is_empty()).unwrap();
+        let mut options =
+            get_tasks(map.clone(), |task| task.borrow().supertasks.is_empty()).unwrap();
         let mut root = Select::new("Select a Task", options.keys().cloned().collect())
             // .with_help_message("")
             .with_vim_mode(true)
@@ -123,24 +124,12 @@ impl List {
                 }
                 _ => {}
             }
-            root = Select::new(
-                "Select a Task",
-                task.borrow()
-                    .subtasks
-                    .iter()
-                    .sorted_by(|(_, task_a), (_, task_b)| task_b.cmp(task_a))
-                    .map(|(_, task)| {
-                        format!(
-                            "{} ({:.2})",
-                            task.borrow().name.clone(),
-                            task.borrow().stress()
-                        )
-                    })
-                    .collect(),
-            )
-            // .with_help_message("")
-            .with_vim_mode(true)
-            .prompt();
+            options = get_tasks(task.borrow().subtasks.clone(), |_| true).unwrap();
+            root = Select::new("Select a Task", options.keys().cloned().collect())
+                // .with_help_message("")
+                .with_vim_mode(true)
+                .prompt();
+            println!("root: {:?}", root);
         }
     }
 

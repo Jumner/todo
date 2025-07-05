@@ -44,7 +44,6 @@ impl List {
     }
 
     pub fn remove_subtask(&mut self, id: usize, subtask: usize) {
-        dbg!(id, subtask, self.tasks.keys());
         self.tasks.get_mut(&id).unwrap().subtasks.remove(&subtask);
         self.tasks.get_mut(&subtask).unwrap().supertasks.remove(&id);
     }

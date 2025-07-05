@@ -75,10 +75,27 @@ impl List {
         return *map.get(&task).unwrap();
     }
 
+    fn valid_children<F: FnMut(&Task) -> bool>(&self, id: usize, mut filter: F) -> usize {
+        let children = self.get_all_children(id);
+        return children
+            .into_iter()
+            .filter(|id| {
+                let task = self.tasks.get(id).unwrap();
+                return filter(task);
+            })
+            .collect::<Vec<usize>>()
+            .len();
+    }
+
     fn pick_task_tree<F: FnMut(&Task) -> bool>(&self, mut select_filter: F) -> usize {
-        let mut valid_ids = self.tasks.keys().cloned().collect();
-        let mut filter: Box<dyn Fn(&Task) -> bool> =
-            Box::new(|task: &Task| -> bool { task.supertasks.is_empty() });
+        let mut valid_ids: Vec<usize> = self.tasks.keys().cloned().collect();
+        let valid_children: HashMap<usize, usize> = valid_ids
+            .iter()
+            .map(|&id| (id, self.valid_children(id, &mut select_filter)))
+            .collect();
+        let mut filter: Box<dyn Fn(&Task) -> bool> = Box::new(|task: &Task| -> bool {
+            valid_children[&task.id] >= 1 && task.supertasks.is_empty()
+        });
         loop {
             let name_to_id = self.get_tasks(valid_ids, filter);
             let name = Select::new(
@@ -99,7 +116,7 @@ impl List {
                 .collect();
             let id = *map.get(&name).unwrap();
             let task = self.tasks.get(&id).unwrap();
-            if task.subtasks.len() == 0 {
+            if select_filter(task) && valid_children[&id] == 1 {
                 return id;
             }
             let mut choice = "Continue";
@@ -118,7 +135,7 @@ impl List {
                 _ => {}
             }
             valid_ids = task.subtasks.iter().cloned().collect();
-            filter = Box::new(|_task: &Task| -> bool { true });
+            filter = Box::new(|task: &Task| -> bool { valid_children[&task.id] > 0 });
         }
     }
 
@@ -151,14 +168,7 @@ impl List {
 
     pub fn update_subtasks(&mut self, id: usize) {
         // get list of parents
-        let mut parents = HashSet::from([id]);
-        let mut stack = vec![id];
-        while let Some(parent) = stack.pop() {
-            for &supertask in self.tasks.get(&parent).unwrap().supertasks.iter() {
-                stack.push(supertask);
-                parents.insert(supertask);
-            }
-        }
+        let parents = self.get_all_parents(id);
         // Get list of tasks
         let task_to_id = self.get_tasks(self.tasks.keys().cloned().collect(), |other| {
             !parents.contains(&other.id)
@@ -218,16 +228,21 @@ impl List {
         });
     }
 
-    pub fn update_supertasks(&mut self, id: usize) {
-        // get list of children
-        let mut children = HashSet::from([id]);
+    fn get_all_parents(&self, id: usize) -> HashSet<usize> {
+        let mut parents = HashSet::from([id]);
         let mut stack = vec![id];
-        while let Some(child) = stack.pop() {
-            for &subtask in self.tasks.get(&child).unwrap().subtasks.iter() {
-                stack.push(subtask);
-                children.insert(subtask);
+        while let Some(parent) = stack.pop() {
+            for &supertask in self.tasks.get(&parent).unwrap().supertasks.iter() {
+                stack.push(supertask);
+                parents.insert(supertask);
             }
         }
+        parents
+    }
+
+    pub fn update_supertasks(&mut self, id: usize) {
+        // get list of children
+        let children = self.get_all_children(id);
         // Get list of tasks
         let task_to_id = self.get_tasks(self.tasks.keys().cloned().collect(), |other| {
             !children.contains(&other.id)
@@ -285,5 +300,17 @@ impl List {
                 self.add_supertask(id, *supertask);
             }
         });
+    }
+
+    fn get_all_children(&self, id: usize) -> HashSet<usize> {
+        let mut children = HashSet::from([id]);
+        let mut stack = vec![id];
+        while let Some(child) = stack.pop() {
+            for &subtask in self.tasks.get(&child).unwrap().subtasks.iter() {
+                stack.push(subtask);
+                children.insert(subtask);
+            }
+        }
+        children
     }
 }

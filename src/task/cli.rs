@@ -10,12 +10,14 @@ pub fn create_task() -> Task {
     let estimated_time = get_estimated_time(None).unwrap();
 
     let estimated_value = get_estimated_value(None).ok();
+    let start = get_datetime(None).ok();
     let deadline = get_datetime(None).ok();
     return Task::new(
         name,
         description,
         TimeDelta::try_hours(estimated_time as i64).unwrap(),
         estimated_value,
+        start,
         deadline,
     );
 }
@@ -28,11 +30,13 @@ impl Task {
             get_estimated_time(Some(self.estimated_time.num_hours() as usize)).unwrap();
 
         let estimated_value = get_estimated_value(self.estimated_value).ok();
+        let start = get_datetime(self.start).ok();
         let deadline = get_datetime(self.deadline).ok();
         self.name = name;
         self.description = description;
         self.estimated_time = TimeDelta::try_hours(estimated_time as i64).unwrap();
         self.estimated_value = estimated_value;
+        self.start = start;
         self.deadline = deadline;
     }
 }

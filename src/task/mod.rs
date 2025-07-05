@@ -13,6 +13,7 @@ pub struct Task {
     description: String,
     estimated_time: TimeDelta,
     estimated_value: Option<usize>,
+    pub start: Option<NaiveDateTime>,
     deadline: Option<NaiveDateTime>,
     pub subtasks: HashSet<usize>,
     pub supertasks: HashSet<usize>,
@@ -24,6 +25,7 @@ impl Task {
         description: String,
         estimated_time: TimeDelta,
         estimated_value: Option<usize>,
+        start: Option<NaiveDateTime>,
         deadline: Option<NaiveDateTime>,
     ) -> Self {
         return Task {
@@ -32,6 +34,7 @@ impl Task {
             description,
             estimated_time,
             estimated_value,
+            start,
             deadline,
             subtasks: HashSet::new(),
             supertasks: HashSet::new(),

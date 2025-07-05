@@ -47,7 +47,9 @@ pub fn load() -> Option<List> {
 pub fn spin() {
     let mut list = load().unwrap_or(List::new());
     loop {
-        main_menu(&mut list);
+        if main_menu(&mut list).is_err() {
+            break;
+        };
         save(&list);
     }
 }

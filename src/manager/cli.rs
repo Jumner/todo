@@ -1,3 +1,4 @@
+use anyhow::Result;
 use inquire::Select;
 
 use crate::{
@@ -5,7 +6,7 @@ use crate::{
     task::{Task, cli::create_task},
 };
 
-pub fn main_menu(list: &mut List) {
+pub fn main_menu(list: &mut List) -> Result<()> {
     println!("Overall Stress {:.2}", list.total_stress());
     match Select::new(
         "Select Action",
@@ -13,8 +14,7 @@ pub fn main_menu(list: &mut List) {
     )
     // .with_help_message("")
     .with_vim_mode(true)
-    .prompt()
-    .unwrap()
+    .prompt()?
     {
         "Add Task" => {
             let task = create_task();
@@ -38,4 +38,5 @@ pub fn main_menu(list: &mut List) {
             println!("Unknown Action");
         }
     }
+    Ok(())
 }

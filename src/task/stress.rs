@@ -46,7 +46,7 @@ impl List {
             .unwrap_or(0.0);
 
         let hours = self.tasks.get(&id).unwrap().estimated_time.as_seconds_f32() / 3600.0;
-        let stress = (self.base_stess(id) + self.value_stress(id)) / hours + self.crunch_stress(id);
+        let stress = self.crunch_stress(id) * (self.base_stess(id) + self.value_stress(id)) / hours;
         return stress.max(child_stress);
     }
 }

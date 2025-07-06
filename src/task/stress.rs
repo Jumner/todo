@@ -31,14 +31,12 @@ impl List {
         return f(hours);
     }
 
-    fn value_stress(&self, id: usize) -> Option<f32> {
-        // How many dollars is worth 1 Schuette? Maybe like 50
-        let value = if let Some(value) = self.tasks.get(&id).unwrap().estimated_value {
-            value as f32
+    fn additional_stress(&self, id: usize) -> Option<f32> {
+        if let Some(stress) = self.tasks.get(&id).unwrap().estimated_stress {
+            return Some(stress as f32);
         } else {
             return None;
         };
-        return Some(1.0 / 50.0 * value);
     }
 
     pub fn stress(&self, id: usize) -> f32 {
@@ -55,7 +53,7 @@ impl List {
 
         let hours = self.tasks.get(&id).unwrap().estimated_time.as_seconds_f32() / 3600.0;
         let stress = self.crunch_stress(id)
-            * (self.base_stess(id) + self.value_stress(id).unwrap_or(0.0))
+            * (self.base_stess(id) + self.additional_stress(id).unwrap_or(0.0))
             / hours;
         return stress.max(child_stress);
     }

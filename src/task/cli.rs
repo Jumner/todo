@@ -9,14 +9,14 @@ pub fn create_task() -> Task {
     let description = get_description(None).unwrap();
     let estimated_time = get_estimated_time(None).unwrap();
 
-    let estimated_value = get_estimated_value(None).ok();
+    let estimated_stress = get_estimated_stress(None).ok();
     let start = get_datetime(None, true).ok();
     let deadline = get_datetime(None, false).ok();
     return Task::new(
         name,
         description,
         TimeDelta::try_hours(estimated_time as i64).unwrap(),
-        estimated_value,
+        estimated_stress,
         start,
         deadline,
     );
@@ -29,13 +29,13 @@ impl Task {
         let estimated_time =
             get_estimated_time(Some(self.estimated_time.num_hours() as usize)).unwrap();
 
-        let estimated_value = get_estimated_value(self.estimated_value).ok();
+        let estimated_stress = get_estimated_stress(self.estimated_stress).ok();
         let start = get_datetime(self.start, true).ok();
         let deadline = get_datetime(self.deadline, false).ok();
         self.name = name;
         self.description = description;
         self.estimated_time = TimeDelta::try_hours(estimated_time as i64).unwrap();
-        self.estimated_value = estimated_value;
+        self.estimated_stress = estimated_stress;
         self.start = start;
         self.deadline = deadline;
     }
@@ -93,16 +93,16 @@ fn get_datetime(default: Option<NaiveDateTime>, start: bool) -> Result<NaiveDate
     return Ok(date.and_time(time));
 }
 
-fn get_estimated_value(default: Option<usize>) -> Result<usize> {
-    let mut estimated_value = CustomType::new("Estimated Value")
-        .with_formatter(&|i: usize| format!("${i}"))
+fn get_estimated_stress(default: Option<f32>) -> Result<f32> {
+    let mut estimated_stress = CustomType::new("Estimated Additional Stress")
+        .with_formatter(&|i: f32| format!("${i}"))
         .with_error_message("Please type a valid number")
-        .with_help_message("Enter the value of the task");
+        .with_help_message("Enter the stress of the task");
     if let Some(default) = default {
-        estimated_value = estimated_value.with_default(default);
+        estimated_stress = estimated_stress.with_default(default);
     }
-    let estimated_value = estimated_value.prompt()?;
-    return Ok(estimated_value);
+    let estimated_stress = estimated_stress.prompt()?;
+    return Ok(estimated_stress);
 }
 
 fn get_estimated_time(default: Option<usize>) -> Result<usize> {

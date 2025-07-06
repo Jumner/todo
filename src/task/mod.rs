@@ -12,7 +12,7 @@ pub struct Task {
     pub name: String,
     description: String,
     estimated_time: TimeDelta,
-    estimated_value: Option<usize>,
+    estimated_stress: Option<f32>,
     start: Option<NaiveDateTime>,
     deadline: Option<NaiveDateTime>,
     pub subtasks: HashSet<usize>,
@@ -24,7 +24,7 @@ impl Task {
         name: String,
         description: String,
         estimated_time: TimeDelta,
-        estimated_value: Option<usize>,
+        estimated_stress: Option<f32>,
         start: Option<NaiveDateTime>,
         deadline: Option<NaiveDateTime>,
     ) -> Self {
@@ -33,7 +33,7 @@ impl Task {
             name,
             description,
             estimated_time,
-            estimated_value,
+            estimated_stress,
             start,
             deadline,
             subtasks: HashSet::new(),
@@ -62,8 +62,8 @@ impl std::fmt::Display for Task {
         writeln!(f, "Name: {}", self.name).unwrap();
         writeln!(f, "Description: {}", self.description).unwrap();
         writeln!(f, "Estimated Hours: {}", self.estimated_time.num_hours()).unwrap();
-        if let Some(value) = self.estimated_value {
-            writeln!(f, "Estimated Value: {}", value).unwrap();
+        if let Some(stress) = self.estimated_stress {
+            writeln!(f, "Estimated Additional Stress: {}", stress).unwrap();
         }
         if let Some(start) = self.start {
             writeln!(f, "Start: {:?}", start).unwrap();

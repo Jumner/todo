@@ -8,7 +8,10 @@ impl List {
         return 0.5; // Hr/Days (I'm calling it a Schuette)
     }
 
-    fn hours_til_due(&self, id: usize) -> Option<f32> {
+    fn hours_til_started(&self, id: usize) -> Option<f32> {
+        // Number of hours until we need to start a task
+        // TODO Take now and compute when the earliest date it can be completed is.
+        // Find time from earliest completion date to the due date
         let now = Local::now().naive_local();
         let deadline = self.tasks.get(&id).unwrap().deadline;
         let time_til_due = if let Some(deadline) = deadline {
@@ -22,7 +25,7 @@ impl List {
     fn crunch_stress(&self, id: usize) -> f32 {
         // This is the hard one...
         // The stress from a task due x hours from now is:
-        let hours = self.hours_til_due(id).unwrap_or(120.0).max(0.0);
+        let hours = self.hours_til_started(id).unwrap_or(120.0).max(0.0);
         let f =
             |x: f32| 22.5 * (-1.05 * x).exp() + 2.0 * (-0.05 * x).exp() + 0.5 * (-0.003 * x).exp();
         return f(hours);

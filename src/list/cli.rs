@@ -65,6 +65,7 @@ impl List {
         )
         // .with_help_message("")
         .with_vim_mode(true)
+        .with_page_size(30)
         .prompt()
         .unwrap();
 

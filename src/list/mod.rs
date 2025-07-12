@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 pub mod cli;
 mod stress;
 
@@ -54,6 +54,30 @@ impl List {
 
     pub fn remove_supertask(&mut self, id: usize, supertask: usize) {
         self.remove_subtask(supertask, id);
+    }
+
+    pub fn get_all_parents(&self, id: usize) -> HashSet<usize> {
+        let mut parents = HashSet::from([id]);
+        let mut stack = vec![id];
+        while let Some(parent) = stack.pop() {
+            for &supertask in self.tasks.get(&parent).unwrap().supertasks.iter() {
+                stack.push(supertask);
+                parents.insert(supertask);
+            }
+        }
+        parents
+    }
+
+    pub fn get_all_children(&self, id: usize) -> HashSet<usize> {
+        let mut children = HashSet::from([id]);
+        let mut stack = vec![id];
+        while let Some(child) = stack.pop() {
+            for &subtask in self.tasks.get(&child).unwrap().subtasks.iter() {
+                stack.push(subtask);
+                children.insert(subtask);
+            }
+        }
+        children
     }
 }
 

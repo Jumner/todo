@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use crate::task::Task;
 use anyhow::Result;
@@ -229,18 +229,6 @@ impl List {
         });
     }
 
-    fn get_all_parents(&self, id: usize) -> HashSet<usize> {
-        let mut parents = HashSet::from([id]);
-        let mut stack = vec![id];
-        while let Some(parent) = stack.pop() {
-            for &supertask in self.tasks.get(&parent).unwrap().supertasks.iter() {
-                stack.push(supertask);
-                parents.insert(supertask);
-            }
-        }
-        parents
-    }
-
     pub fn update_supertasks(&mut self, id: usize) {
         // get list of children
         let children = self.get_all_children(id);
@@ -301,17 +289,5 @@ impl List {
                 self.add_supertask(id, *supertask);
             }
         });
-    }
-
-    fn get_all_children(&self, id: usize) -> HashSet<usize> {
-        let mut children = HashSet::from([id]);
-        let mut stack = vec![id];
-        while let Some(child) = stack.pop() {
-            for &subtask in self.tasks.get(&child).unwrap().subtasks.iter() {
-                stack.push(subtask);
-                children.insert(subtask);
-            }
-        }
-        children
     }
 }

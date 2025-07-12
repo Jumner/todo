@@ -7,7 +7,29 @@ fn hours(time: &TimeDelta) -> f32 {
 }
 
 impl List {
-    fn base_stess(&self, _id: usize) -> f32 {
+    fn effective_stress(&self, id: usize) -> f32 {
+        let parents = self.get_all_parents(id);
+        return parents
+            .iter()
+            .map(|task| {
+                self.tasks
+                    .get(task)
+                    .unwrap()
+                    .estimated_stress
+                    .unwrap_or(0.0)
+            })
+            .sum();
+    }
+
+    fn effective_time(&self, id: usize) -> TimeDelta {
+        let children = self.get_all_children(id);
+        return children
+            .iter()
+            .map(|task| self.tasks.get(task).unwrap().estimated_time)
+            .sum();
+    }
+
+    fn base_stess() -> f32 {
         // Each task has a bit of stress associated with its sheer existance.
         return 0.5; // Hr/Days (I'm calling it a Schuette)
     }
@@ -35,14 +57,6 @@ impl List {
         return f(hours);
     }
 
-    fn additional_stress(&self, id: usize) -> Option<f32> {
-        if let Some(stress) = self.tasks.get(&id).unwrap().estimated_stress {
-            return Some(stress as f32);
-        } else {
-            return None;
-        };
-    }
-
     pub fn stress(&self, id: usize) -> f32 {
         let child_stress = self
             .tasks
@@ -55,10 +69,9 @@ impl List {
             .max_by(|a, b| a.partial_cmp(b).unwrap())
             .unwrap_or(0.0);
 
-        let hours = hours(&self.tasks.get(&id).unwrap().estimated_time);
-        let stress = self.crunch_stress(id)
-            * (self.base_stess(id) + self.additional_stress(id).unwrap_or(0.0))
-            / hours;
+        let hours = hours(&self.effective_time(id));
+        let stress =
+            self.crunch_stress(id) * (List::base_stess() + self.effective_stress(id)) / hours;
         return stress.max(child_stress);
     }
 }

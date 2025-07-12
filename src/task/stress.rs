@@ -1,6 +1,10 @@
-use chrono::Local;
+use chrono::{Local, TimeDelta};
 
 use crate::list::List;
+
+fn hours(time: &TimeDelta) -> f32 {
+    return time.as_seconds_f32() / 3600.0;
+}
 
 impl List {
     fn base_stess(&self, _id: usize) -> f32 {
@@ -19,7 +23,7 @@ impl List {
         } else {
             return None;
         };
-        return Some(time_til_due.as_seconds_f32() / 3600.0);
+        return Some(hours(&time_til_due));
     }
 
     fn crunch_stress(&self, id: usize) -> f32 {
@@ -51,7 +55,7 @@ impl List {
             .max_by(|a, b| a.partial_cmp(b).unwrap())
             .unwrap_or(0.0);
 
-        let hours = self.tasks.get(&id).unwrap().estimated_time.as_seconds_f32() / 3600.0;
+        let hours = hours(&self.tasks.get(&id).unwrap().estimated_time);
         let stress = self.crunch_stress(id)
             * (self.base_stess(id) + self.additional_stress(id).unwrap_or(0.0))
             / hours;

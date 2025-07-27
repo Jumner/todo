@@ -27,6 +27,13 @@ impl Schedule {
         return self.default_schedule.get_itinerary(date.weekday());
     }
 
+    pub fn get_mut_itinerary(&mut self, date: NaiveDate) -> &mut Itinerary {
+        if let Some(itinerary) = self.schedule.get_mut(&date) {
+            return itinerary;
+        }
+        return self.default_schedule.get_mut_itinerary(date.weekday());
+    }
+
     pub fn set_itinerary(&mut self, date: NaiveDate, itinerary: Itinerary) {
         self.schedule.insert(date, itinerary);
     }

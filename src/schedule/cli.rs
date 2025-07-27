@@ -1,6 +1,7 @@
-use super::{Itinerary, TimeBlock};
+use super::{Itinerary, Schedule, TimeBlock};
 use crate::task::cli::get_time;
-use inquire::Select;
+use chrono::{NaiveDate, NaiveTime, Weekday};
+use inquire::{DateSelect, Select};
 
 pub fn create_timeblock() -> TimeBlock {
     let mut timeblock = TimeBlock::new();
@@ -92,4 +93,62 @@ impl Itinerary {
             .prompt()
             .unwrap()
     }
+}
+
+impl Schedule {
+    pub fn update(&mut self) {
+        loop {
+            match Select::new(
+                "Select Action",
+                vec!["Update Schedule", "Update Default Schedule", "Done"],
+            )
+            .prompt()
+            .unwrap()
+            {
+                "Update Schedule" => {
+                    let date = select_date();
+                    if let Some(itinerary) = self.schedule.get_mut(&date) {
+                        itinerary.update();
+                        continue;
+                    }
+                    let itinerary = create_itinerary();
+                    self.schedule.insert(date, itinerary);
+                }
+                "Update Default Schedule" => {
+                    let day = select_day();
+                    self.default_schedule.get_mut_itinerary(day).update();
+                }
+                "Done" => {
+                    return;
+                }
+                _ => {
+                    unreachable!();
+                }
+            }
+        }
+    }
+}
+
+fn select_day() -> Weekday {
+    Select::new(
+        "Select Action",
+        vec![
+            Weekday::Mon,
+            Weekday::Tue,
+            Weekday::Wed,
+            Weekday::Thu,
+            Weekday::Fri,
+            Weekday::Sat,
+            Weekday::Sun,
+        ],
+    )
+    .prompt()
+    .unwrap()
+}
+
+fn select_date() -> NaiveDate {
+    DateSelect::new("Select Date to Schedule")
+        .with_help_message("Enter a date")
+        .prompt()
+        .unwrap()
 }

@@ -19,3 +19,20 @@ pub fn create_timeblock() -> TimeBlock {
     .unwrap();
     return TimeBlock::new(start, end);
 }
+
+impl TimeBlock {
+    pub fn update(&mut self) {
+        self.start = get_time(
+            Some(self.start),
+            String::from("Select the start time of the timeblock"),
+            String::from("Enter the start time"),
+        )
+        .unwrap();
+        self.end = get_time(
+            Some(self.end),
+            String::from("Select the end time of the timeblock"),
+            String::from("Enter the end time"),
+        )
+        .unwrap();
+    }
+}

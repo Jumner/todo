@@ -31,8 +31,8 @@ impl Itinerary {
 
 #[derive(Debug, Clone, Copy)]
 pub struct TimeBlock {
-    start: NaiveTime,
-    end: NaiveTime,
+    pub start: NaiveTime,
+    pub end: NaiveTime,
 }
 
 impl TimeBlock {

@@ -1,21 +1,25 @@
+use std::collections::HashSet;
+
 use anyhow::{Result, anyhow};
-use chrono::{NaiveTime, TimeDelta};
+use chrono::{NaiveTime, TimeDelta, Timelike};
 
 #[derive(Debug, Clone)]
 pub struct Itinerary {
-    blocks: Vec<TimeBlock>,
+    pub blocks: HashSet<TimeBlock>,
 }
 
 impl Itinerary {
     pub fn new() -> Self {
-        Itinerary { blocks: Vec::new() }
+        Itinerary {
+            blocks: HashSet::new(),
+        }
     }
 
     pub fn add_block(&mut self, block: TimeBlock) -> Result<()> {
         if self.overlaps(&block) {
             return Err(anyhow!("Block overlaps with itinerary"));
         }
-        self.blocks.push(block);
+        self.blocks.insert(block);
         Ok(())
     }
 
@@ -29,14 +33,36 @@ impl Itinerary {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub struct TimeBlock {
     pub start: NaiveTime,
     pub end: NaiveTime,
 }
 
+impl std::fmt::Display for TimeBlock {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(
+            f,
+            "{:02}:{:02}:{:02} - {:02}:{:02}:{:02}",
+            self.start.hour(),
+            self.start.minute(),
+            self.start.second(),
+            self.end.hour(),
+            self.end.minute(),
+            self.end.second()
+        )
+    }
+}
+
 impl TimeBlock {
-    pub fn new(start: NaiveTime, end: NaiveTime) -> Self {
+    pub fn new() -> Self {
+        TimeBlock {
+            start: NaiveTime::from_hms_opt(0, 0, 0).unwrap(),
+            end: NaiveTime::from_hms_opt(0, 0, 0).unwrap(),
+        }
+    }
+
+    pub fn from_start_end(start: NaiveTime, end: NaiveTime) -> Self {
         TimeBlock { start, end }
     }
 

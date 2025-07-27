@@ -1,23 +1,11 @@
-use chrono::NaiveTime;
-
+use super::{Itinerary, TimeBlock};
 use crate::task::cli::get_time;
-
-use super::TimeBlock;
+use inquire::Select;
 
 pub fn create_timeblock() -> TimeBlock {
-    let start = get_time(
-        NaiveTime::from_hms_opt(0, 0, 0),
-        String::from("Select the start time of the timeblock"),
-        String::from("Enter the start time"),
-    )
-    .unwrap();
-    let end = get_time(
-        NaiveTime::from_hms_opt(0, 0, 0),
-        String::from("Select the end time of the timeblock"),
-        String::from("Enter the end time"),
-    )
-    .unwrap();
-    return TimeBlock::new(start, end);
+    let mut timeblock = TimeBlock::new();
+    timeblock.update();
+    return timeblock;
 }
 
 impl TimeBlock {
@@ -34,5 +22,74 @@ impl TimeBlock {
             String::from("Enter the end time"),
         )
         .unwrap();
+    }
+}
+
+pub fn create_itinerary() -> Itinerary {
+    let mut itinerary = Itinerary::new();
+    itinerary.update();
+    return itinerary;
+}
+
+impl Itinerary {
+    pub fn update(&mut self) {
+        loop {
+            match Select::new(
+                "Select Action",
+                vec![
+                    "Add Timeblock",
+                    "Remove Timeblock",
+                    "Modify Timeblock",
+                    "Done",
+                ],
+            )
+            .prompt()
+            .unwrap()
+            {
+                "Add Timeblock" => {
+                    self.add_timeblock();
+                }
+                "Remove Timeblock" => {
+                    self.remove_timeblock();
+                }
+                "Modify Timeblock" => {
+                    self.modify_timeblock();
+                }
+                "Done" => {
+                    return;
+                }
+                _ => {
+                    unreachable!();
+                }
+            }
+        }
+    }
+
+    fn add_timeblock(&mut self) {
+        let timeblock = create_timeblock();
+        self.blocks.insert(timeblock);
+    }
+
+    fn remove_timeblock(&mut self) {
+        let timeblock = *self.select_timeblock();
+        self.blocks.remove(&timeblock);
+    }
+
+    fn modify_timeblock(&mut self) {
+        let timeblock = *self.select_timeblock();
+        let mut timeblock = self.blocks.take(&timeblock).unwrap();
+        let copy = timeblock.clone();
+        timeblock.update();
+        if let Err(err) = self.add_block(timeblock) {
+            println!("Couldn't update timeblock: {}", err);
+
+            self.add_block(copy).unwrap();
+        }
+    }
+
+    fn select_timeblock(&self) -> &TimeBlock {
+        Select::new("Select Timeblock", self.blocks.iter().collect())
+            .prompt()
+            .unwrap()
     }
 }

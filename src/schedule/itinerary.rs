@@ -5,26 +5,26 @@ use chrono::{NaiveTime, TimeDelta, Timelike};
 
 #[derive(Debug, Clone)]
 pub struct Itinerary {
-    pub blocks: HashSet<TimeBlock>,
+    pub timeblocks: HashSet<TimeBlock>,
 }
 
 impl Itinerary {
     pub fn new() -> Self {
         Itinerary {
-            blocks: HashSet::new(),
+            timeblocks: HashSet::new(),
         }
     }
 
-    pub fn add_block(&mut self, block: TimeBlock) -> Result<()> {
+    pub fn add_timeblock(&mut self, block: TimeBlock) -> Result<()> {
         if self.overlaps(&block) {
             return Err(anyhow!("Block overlaps with itinerary"));
         }
-        self.blocks.insert(block);
+        self.timeblocks.insert(block);
         Ok(())
     }
 
     fn overlaps(&self, other_block: &TimeBlock) -> bool {
-        for block in self.blocks.iter() {
+        for block in self.timeblocks.iter() {
             if block.overlaps(other_block) {
                 return true;
             }

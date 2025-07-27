@@ -47,7 +47,7 @@ impl Itinerary {
             .unwrap()
             {
                 "Add Timeblock" => {
-                    self.add_timeblock();
+                    self.create_timeblock();
                 }
                 "Remove Timeblock" => {
                     self.remove_timeblock();
@@ -65,30 +65,30 @@ impl Itinerary {
         }
     }
 
-    fn add_timeblock(&mut self) {
+    fn create_timeblock(&mut self) {
         let timeblock = create_timeblock();
-        self.blocks.insert(timeblock);
+        self.timeblocks.insert(timeblock);
     }
 
     fn remove_timeblock(&mut self) {
         let timeblock = *self.select_timeblock();
-        self.blocks.remove(&timeblock);
+        self.timeblocks.remove(&timeblock);
     }
 
     fn modify_timeblock(&mut self) {
         let timeblock = *self.select_timeblock();
-        let mut timeblock = self.blocks.take(&timeblock).unwrap();
+        let mut timeblock = self.timeblocks.take(&timeblock).unwrap();
         let copy = timeblock.clone();
         timeblock.update();
-        if let Err(err) = self.add_block(timeblock) {
+        if let Err(err) = self.add_timeblock(timeblock) {
             println!("Couldn't update timeblock: {}", err);
 
-            self.add_block(copy).unwrap();
+            self.add_timeblock(copy).unwrap();
         }
     }
 
     fn select_timeblock(&self) -> &TimeBlock {
-        Select::new("Select Timeblock", self.blocks.iter().collect())
+        Select::new("Select Timeblock", self.timeblocks.iter().collect())
             .prompt()
             .unwrap()
     }

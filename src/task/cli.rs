@@ -41,7 +41,7 @@ impl Task {
     }
 }
 
-fn get_time(
+pub fn get_time(
     default: Option<NaiveTime>,
     message: String,
     help_message: String,

@@ -1,3 +1,4 @@
+pub mod cli;
 mod default_schedule;
 mod itinerary;
 use chrono::{Datelike, NaiveDate, Weekday};

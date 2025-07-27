@@ -1,6 +1,6 @@
 use super::{Itinerary, Schedule, TimeBlock};
 use crate::task::cli::get_time;
-use chrono::{NaiveDate, NaiveTime, Weekday};
+use chrono::{NaiveDate, Weekday};
 use inquire::{DateSelect, Select};
 
 pub fn create_timeblock() -> TimeBlock {
@@ -97,35 +97,18 @@ impl Itinerary {
 
 impl Schedule {
     pub fn update(&mut self) {
-        loop {
-            match Select::new(
-                "Select Action",
-                vec!["Update Schedule", "Update Default Schedule", "Done"],
-            )
-            .prompt()
-            .unwrap()
-            {
-                "Update Schedule" => {
-                    let date = select_date();
-                    if let Some(itinerary) = self.schedule.get_mut(&date) {
-                        itinerary.update();
-                        continue;
-                    }
-                    let itinerary = create_itinerary();
-                    self.schedule.insert(date, itinerary);
-                }
-                "Update Default Schedule" => {
-                    let day = select_day();
-                    self.default_schedule.get_mut_itinerary(day).update();
-                }
-                "Done" => {
-                    return;
-                }
-                _ => {
-                    unreachable!();
-                }
-            }
+        let date = select_date();
+        if let Some(itinerary) = self.schedule.get_mut(&date) {
+            itinerary.update();
+            return;
         }
+        let itinerary = create_itinerary();
+        self.schedule.insert(date, itinerary);
+    }
+
+    pub fn update_default(&mut self) {
+        let day = select_day();
+        self.default_schedule.get_mut_itinerary(day).update();
     }
 }
 

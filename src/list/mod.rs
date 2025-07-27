@@ -2,13 +2,14 @@ use std::collections::{HashMap, HashSet};
 pub mod cli;
 mod stress;
 
-use crate::task::Task;
+use crate::{schedule::Schedule, task::Task};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct List {
     pub tasks: HashMap<usize, Task>,
     id_counter: usize,
+    pub schedule: Schedule,
 }
 
 impl List {
@@ -16,6 +17,7 @@ impl List {
         List {
             tasks: HashMap::new(),
             id_counter: 0,
+            schedule: Schedule::new(),
         }
     }
 

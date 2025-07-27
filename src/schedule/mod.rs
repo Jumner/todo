@@ -4,9 +4,10 @@ mod itinerary;
 use chrono::{Datelike, NaiveDate, Weekday};
 use default_schedule::DefaultSchedule;
 pub use itinerary::{Itinerary, TimeBlock};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Schedule {
     schedule: HashMap<NaiveDate, Itinerary>,
     default_schedule: DefaultSchedule,

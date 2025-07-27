@@ -1,7 +1,8 @@
 use crate::schedule::Itinerary;
 use chrono::Weekday;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DefaultSchedule {
     week: [Itinerary; 7],
 }

@@ -10,7 +10,14 @@ pub fn main_menu(list: &mut List) -> Result<()> {
     println!("Overall Stress {:.2}", list.total_stress());
     match Select::new(
         "Select Action",
-        vec!["Add Task", "Modify Task", "Complete Task", "View Task"],
+        vec![
+            "Add Task",
+            "Modify Task",
+            "Complete Task",
+            "View Task",
+            "Update Schedule",
+            "Update Default Schedule",
+        ],
     )
     // .with_help_message("")
     .with_vim_mode(true)
@@ -33,6 +40,12 @@ pub fn main_menu(list: &mut List) -> Result<()> {
         "View Task" => {
             let task = list.pick_task(|_| true);
             println!("{}", list.tasks.get(&task).unwrap());
+        }
+        "Update Schedule" => {
+            list.schedule.update();
+        }
+        "Update Default Schedule" => {
+            list.schedule.update_default();
         }
         _ => {
             println!("Unknown Action");

@@ -2,8 +2,9 @@ use std::collections::HashSet;
 
 use anyhow::{Result, anyhow};
 use chrono::{NaiveTime, TimeDelta, Timelike};
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Itinerary {
     pub timeblocks: HashSet<TimeBlock>,
 }
@@ -33,7 +34,7 @@ impl Itinerary {
     }
 }
 
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TimeBlock {
     pub start: NaiveTime,
     pub end: NaiveTime,

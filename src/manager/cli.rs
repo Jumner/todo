@@ -20,7 +20,6 @@ pub fn main_menu(list: &mut List) -> Result<()> {
         ],
     )
     // .with_help_message("")
-    .with_vim_mode(true)
     .prompt()?
     {
         "Add Task" => {

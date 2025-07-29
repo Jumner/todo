@@ -37,7 +37,6 @@ impl List {
 
     pub fn pick_task<F: FnMut(&Task) -> bool>(&self, filter: F) -> usize {
         match Select::new("Search Type", vec!["Tree", "List"])
-            .with_vim_mode(true)
             .prompt()
             .unwrap()
         {
@@ -64,7 +63,6 @@ impl List {
                 .collect(),
         )
         // .with_help_message("")
-        .with_vim_mode(true)
         .with_page_size(30)
         .prompt()
         .unwrap();
@@ -108,7 +106,6 @@ impl List {
                     .collect(),
             )
             // .with_help_message("")
-            .with_vim_mode(true)
             .prompt()
             .unwrap();
             let map: HashMap<String, usize> = name_to_id
@@ -124,7 +121,6 @@ impl List {
             if select_filter(task) {
                 choice = Select::new("Search subtasks or select task", vec!["Continue", "Select"])
                     // .with_help_message("")
-                    .with_vim_mode(true)
                     .prompt()
                     .unwrap();
             }
@@ -193,7 +189,6 @@ impl List {
                 .collect(),
         )
         // .with_help_message("")
-        .with_vim_mode(true)
         .with_default(&current_subtasks)
         .with_help_message("Select subtasks")
         .prompt();
@@ -255,7 +250,6 @@ impl List {
                 .collect(),
         )
         // .with_help_message("")
-        .with_vim_mode(true)
         .with_default(&current_supertasks)
         .with_help_message("Select supertasks")
         .prompt();

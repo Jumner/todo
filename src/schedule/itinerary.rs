@@ -24,12 +24,12 @@ impl Itinerary {
         Ok(())
     }
 
-    pub fn hours_between(&self, start: NaiveTime, end: NaiveTime) -> f32 {
-        let mut hours = 0.0;
+    pub fn time_between(&self, start: NaiveTime, end: NaiveTime) -> TimeDelta {
+        let mut time = TimeDelta::zero();
         for block in self.timeblocks.iter() {
-            hours += block.hours_between(start, end);
+            time += block.time_between(start, end);
         }
-        hours
+        time
     }
 
     fn overlaps(&self, other_block: &TimeBlock) -> bool {
@@ -79,7 +79,7 @@ impl TimeBlock {
         self.end.signed_duration_since(self.start)
     }
 
-    pub fn hours_between(&self, start: NaiveTime, end: NaiveTime) -> f32 {
+    pub fn time_between(&self, start: NaiveTime, end: NaiveTime) -> TimeDelta {
         let new_start = if start > self.start {
             start
         } else {
@@ -89,9 +89,9 @@ impl TimeBlock {
         let new_end = if end < self.end { end } else { self.end };
 
         if new_start > new_end {
-            return 0.0;
+            return TimeDelta::zero();
         }
-        return new_end.signed_duration_since(new_start).as_seconds_f32() / 3600.0;
+        return new_end.signed_duration_since(new_start);
     }
 
     fn overlaps(&self, other_block: &TimeBlock) -> bool {

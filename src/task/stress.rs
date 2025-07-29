@@ -1,4 +1,4 @@
-use chrono::{Local, TimeDelta};
+use chrono::TimeDelta;
 
 use crate::list::List;
 
@@ -38,10 +38,9 @@ impl List {
         // Number of hours until we need to start a task
         // TODO Take now and compute when the earliest date it can be completed is.
         // Find time from earliest completion date to the due date
-        let now = Local::now().naive_local();
         let deadline = self.tasks.get(&id).unwrap().deadline;
         let time_til_due = if let Some(deadline) = deadline {
-            deadline.signed_duration_since(now)
+            self.schedule.time_until(deadline) - self.effective_time(id)
         } else {
             return None;
         };

@@ -1,7 +1,7 @@
 pub mod cli;
 mod default_schedule;
 mod itinerary;
-use chrono::{Datelike, Local, NaiveDate, NaiveDateTime, NaiveTime, Weekday};
+use chrono::{Datelike, Local, NaiveDate, NaiveDateTime, NaiveTime, TimeDelta, Weekday};
 use default_schedule::DefaultSchedule;
 pub use itinerary::{Itinerary, TimeBlock};
 use serde::{Deserialize, Serialize};
@@ -21,13 +21,13 @@ impl Schedule {
         }
     }
 
-    pub fn hours_until(&self, date: NaiveDateTime) -> f32 {
+    pub fn time_until(&self, datetime: NaiveDateTime) -> TimeDelta {
         let now = Local::now().naive_local();
-        self.hours_between(now, date)
+        self.time_between(now, datetime)
     }
 
-    fn hours_between(&self, start: NaiveDateTime, end: NaiveDateTime) -> f32 {
-        let mut hours = 0.0;
+    fn time_between(&self, start: NaiveDateTime, end: NaiveDateTime) -> TimeDelta {
+        let mut time = TimeDelta::zero();
         let mut start_time = start.time();
         for date in start.date().iter_days() {
             if date > end.date() {
@@ -39,10 +39,10 @@ impl Schedule {
                 NaiveTime::from_hms_opt(23, 59, 59).unwrap()
             };
             let itinerary = self.get_itinerary(date);
-            hours += itinerary.hours_between(start_time, end_time);
+            time += itinerary.time_between(start_time, end_time);
             start_time = NaiveTime::MIN;
         }
-        hours
+        time
     }
 
     pub fn get_itinerary(&self, date: NaiveDate) -> &Itinerary {

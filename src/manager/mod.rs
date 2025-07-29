@@ -40,7 +40,8 @@ pub fn load() -> Option<List> {
     let mut contents = String::new();
     file.read_to_string(&mut contents).unwrap();
 
-    let list = serde_yaml::from_str(&contents).unwrap();
+    let mut list: List = serde_yaml::from_str(&contents).unwrap();
+    list.schedule.clean();
     return Some(list);
 }
 

@@ -66,4 +66,9 @@ impl Schedule {
     pub fn set_default_itinerary(&mut self, weekday: Weekday, itinerary: Itinerary) {
         self.default_schedule.set_itinerary(weekday, itinerary);
     }
+
+    pub fn clean(&mut self) {
+        let today = Local::now().naive_local().date();
+        self.schedule.retain(|&date, _| date >= today);
+    }
 }

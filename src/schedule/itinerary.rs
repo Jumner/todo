@@ -1,7 +1,8 @@
-use std::collections::HashSet;
+use std::{cmp::Ordering, collections::HashSet};
 
 use anyhow::{Result, anyhow};
 use chrono::{NaiveTime, TimeDelta, Timelike};
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -22,6 +23,21 @@ impl Itinerary {
         }
         self.timeblocks.insert(block);
         Ok(())
+    }
+
+    pub fn earliest_complete(
+        &self,
+        mut start: NaiveTime,
+        mut time: TimeDelta,
+    ) -> (NaiveTime, TimeDelta) {
+        let sorted = self.timeblocks.iter().sorted();
+        for block in sorted {
+            (start, time) = block.earliest_complete(start, time);
+            if time == TimeDelta::zero() {
+                return (start, time);
+            }
+        }
+        return (start, time);
     }
 
     pub fn time_between(&self, start: NaiveTime, end: NaiveTime) -> TimeDelta {
@@ -79,6 +95,20 @@ impl TimeBlock {
         self.end.signed_duration_since(self.start)
     }
 
+    pub fn earliest_complete(&self, start: NaiveTime, time: TimeDelta) -> (NaiveTime, TimeDelta) {
+        let new_start = if start > self.start {
+            start
+        } else {
+            self.start
+        };
+        let duration = self.end.signed_duration_since(new_start);
+        let new_time = time.checked_sub(&duration).unwrap();
+        if new_time > TimeDelta::zero() {
+            return (self.end, new_time);
+        }
+        return (new_start.overflowing_add_signed(time).0, TimeDelta::zero());
+    }
+
     pub fn time_between(&self, start: NaiveTime, end: NaiveTime) -> TimeDelta {
         let new_start = if start > self.start {
             start
@@ -102,5 +132,17 @@ impl TimeBlock {
             return true;
         }
         return false;
+    }
+}
+
+impl PartialOrd for TimeBlock {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        return self.start.partial_cmp(&other.end);
+    }
+}
+
+impl Ord for TimeBlock {
+    fn cmp(&self, other: &Self) -> Ordering {
+        return self.start.cmp(&other.end);
     }
 }

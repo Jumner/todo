@@ -21,7 +21,7 @@ impl List {
             .sum();
     }
 
-    fn effective_time(&self, id: usize) -> TimeDelta {
+    pub fn effective_time(&self, id: usize) -> TimeDelta {
         let children = self.get_all_children(id);
         return children
             .iter()

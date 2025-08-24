@@ -21,6 +21,21 @@ impl Schedule {
         }
     }
 
+    pub fn earliest_complete(&self, mut time: TimeDelta) -> NaiveDateTime {
+        println!("SCHEDULE");
+        let now = Local::now().naive_local();
+        let mut start = now.time();
+        for date in now.date().iter_days() {
+            let itinerary = self.get_itinerary(date);
+            (start, time) = itinerary.earliest_complete(start, time);
+            if time == TimeDelta::zero() {
+                return date.and_time(start);
+            }
+            start = NaiveTime::MIN;
+        }
+        unreachable!("Task not completable?");
+    }
+
     pub fn time_until(&self, datetime: NaiveDateTime) -> TimeDelta {
         let now = Local::now().naive_local();
         self.time_between(now, datetime)

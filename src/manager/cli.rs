@@ -38,7 +38,11 @@ pub fn main_menu(list: &mut List) -> Result<()> {
         }
         "View Task" => {
             let task = list.pick_task(|_| true);
-            println!("{}", list.tasks.get(&task).unwrap());
+            println!(
+                "{}Earliest Completion: {}",
+                list.tasks.get(&task).unwrap(),
+                list.schedule.earliest_complete(list.effective_time(task))
+            );
         }
         "Update Schedule" => {
             list.schedule.update();

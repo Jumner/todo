@@ -41,7 +41,10 @@ pub fn main_menu(list: &mut List) -> Result<()> {
             println!(
                 "{}Earliest Completion: {}",
                 list.tasks.get(&task).unwrap(),
-                list.schedule.earliest_complete(list.effective_time(task))
+                list.schedule.earliest_complete(
+                    list.effective_time(task),
+                    list.tasks.get(&task).unwrap().start
+                )
             );
         }
         "Update Schedule" => {

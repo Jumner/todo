@@ -13,7 +13,7 @@ pub struct Task {
     description: String,
     estimated_time: TimeDelta,
     estimated_stress: Option<f32>,
-    start: Option<NaiveDateTime>,
+    pub start: Option<NaiveDateTime>,
     deadline: Option<NaiveDateTime>,
     pub subtasks: HashSet<usize>,
     pub supertasks: HashSet<usize>,

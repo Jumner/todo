@@ -57,6 +57,9 @@ impl List {
     }
 
     pub fn stress(&self, id: usize) -> f32 {
+        if !self.tasks.get(&id).unwrap().started() {
+            return 0.0;
+        }
         let child_stress = self
             .tasks
             .get(&id)
